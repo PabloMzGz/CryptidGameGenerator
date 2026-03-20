@@ -247,13 +247,17 @@ function MapRenderer(canvasId, mapKey, advanced, size) {
     const self = this;
     const key = mapKeyValue.replace('intro_', '');
 
+    // The key always encodes 8 structure positions (4 stones + 4 shacks).
+    // In intro mode only the first 3 of each group (green/blue/white) are drawn;
+    // in advanced mode all 4 (including black) are drawn.
+    // charOffset must advance through ALL 8 positions regardless.
     structs.forEach(function (group, groupIdx) {
       group.forEach(function (img, imgIdx) {
-        if (isAdvanced && imgIdx < 3 || !isAdvanced) {
-          const col = parseInt(key.substring(charOffset, charOffset + 1), 16) + 1;
-          const row = parseInt(key.substring(charOffset + 1, charOffset + 2), 16) + 1;
-          charOffset += 2;
-          self.drawStructure(row, col, img);
+        const rowVal = parseInt(key.substring(charOffset + 0, charOffset + 1), 16) + 1;
+        const colVal = parseInt(key.substring(charOffset + 1, charOffset + 2), 16) + 1;
+        charOffset += 2;
+        if (isAdvanced || imgIdx < 3) {
+          self.drawStructure(colVal, rowVal, img);
         }
       });
     });

@@ -127,7 +127,7 @@ function GameController() {
 
     // If local restore failed, try server
     if (!restoredLocal) {
-      $(SEL_LOADING_CONTENT).data('tkey', 'loading_remote');
+      $(SEL_LOADING_CONTENT).data('tkey', 'loading_local');
       translateElement($(SEL_LOADING_CONTENT));
       try {
         fetchedRemote = await gameStore.fetchFromServer();
@@ -218,7 +218,7 @@ function GameController() {
     $('.game-gameplay').show();
     $('.game-start').hide();
 
-    window.cryptid.map.newMapSettings(currentGame.key, isIntro, currentSetup.target);
+    window.cryptid.map.newMapSettings(currentGame.key, !isIntro, currentSetup.target);
     window.cryptid.map.expandMap();
 
     $(SEL_REMINDER_DIV).slideUp();
@@ -445,7 +445,7 @@ function GameController() {
     const col   = parseInt(parts[0]);
     const row   = parseInt(parts[1]);
 
-    window.cryptid.map.drawTarget(row, col);
+    window.cryptid.map.drawTarget(col, row);
     $(SEL_TARGET_DIV).slideUp();
     $(SEL_REMINDER_DIV).slideUp();
     this.revealClues();

@@ -211,34 +211,21 @@ function GameStore() {
   // ---------------------------------------------------------------------------
 
   /**
-   * Fetch one game from the PHP backend for the given mode.
+   * Generate one game client-side for the given mode (replaces the PHP fetch).
    * @param {string} fetchMode - 'intro' | 'normal'
    * @returns {Promise<boolean>}
    */
   this.fetchGame = function (fetchMode) {
     const self = this;
-    const params = {
-      mode: fetchMode,
-      mapsUsed: this.modeMapCodes(fetchMode),
-    };
     return new Promise(function (resolve, reject) {
-      $.getJSON('php/getGame.php', params)
-        .done(function (data) {
-          self.storeGame(data);
-          resolve(true);
-        })
-        .fail(function (xhr) {
-          const status = xhr.status || 0;
-          let errorKey;
-          if (xhr.readyState === 4) {
-            errorKey = HTTP_ERRORS[status] || 'loading_err_unknown';
-          } else if (xhr.readyState === 0) {
-            errorKey = 'loading_err_network';
-          } else {
-            errorKey = 'loading_err_unknown';
-          }
-          reject(errorKey);
-        });
+      try {
+        const data = generateGame(fetchMode);
+        self.storeGame(data);
+        resolve(true);
+      } catch (err) {
+        console.error('gameGenerator error:', err);
+        reject('loading_err_unknown');
+      }
     });
   };
 
