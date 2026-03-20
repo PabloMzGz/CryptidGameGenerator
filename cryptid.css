@@ -1,0 +1,329 @@
+/* 
+    Created on : 22-Sep-2017, 12:33:30
+    Author     : halib
+*/
+h6, h5, h4, h3, h2, h1 {
+  margin: 0; }
+
+#privacy-policy-body h2 {
+  font-family: 'Alegreya', serif;
+  font-size: large; }
+
+a {
+  text-decoration: none; }
+
+a.visible {
+  text-decoration: underline;
+  color: blue; }
+
+html, body {
+  font-style: normal; }
+
+canvas {
+  margin: 16px auto 16px auto; }
+
+#ytplayer-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  /* 16:9 */
+  padding-top: 25px;
+  height: 0; }
+
+#ytplayer-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none; }
+
+#mobile_top_menu .title {
+  font-size: xx-large; }
+
+#mobile_top_menu img {
+  vertical-align: middle;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-right: 10px; }
+
+#mobile_top_menu img.right {
+  float: right; }
+
+#mobile_top_menu img.right:first-child {
+  padding-right: 0; }
+
+.mobile-burger {
+  cursor: pointer; }
+
+#mobile_side_menu {
+  top: 0;
+  width: 50%;
+  z-index: 20; }
+
+/* Hide default HTML checkbox */
+.image-button input {
+  display: none; }
+
+/* The slider */
+.thumb {
+  -webkit-filter: opacity(0.3);
+  filter: opacity(0.3); }
+
+input:checked + .thumb {
+  -webkit-filter: opacity(1);
+  filter: opacity(1); }
+
+select {
+  padding: 9px 0;
+  width: 100%;
+  border: 1px solid #79c7c2;
+  background-color: white;
+  outline: none; }
+
+select:focus {
+  border-width: 2px;
+  border-color: #dbe388; }
+
+input[type="number"] {
+  padding: 9px;
+  width: 100%;
+  border: 1px solid #79c7c2;
+  outline: none; }
+
+input[type="number"]:focus {
+  border-width: 2px;
+  border-color: #dbe388; }
+
+.cryptid-background {
+  background-image: url("img/Cryptid_foliage.png");
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: 200px 350px;
+  background-color: #3D6A6D;
+  height: 100vh;
+  padding-top: 2em; }
+
+.cryptid-devil {
+  max-width: 300px;
+  max-height: 139px; }
+
+.cryptid-highlight {
+  background-color: #79c7c2; }
+
+button {
+  background-color: #79c7c2; }
+
+button:hover {
+  background-color: #dbe388 !important; }
+
+.cryptid-hover-highlight:hover {
+  background-color: #dbe388 !important;
+  cursor: pointer; }
+
+.pointer {
+  cursor: pointer; }
+
+.cryptid-title {
+  background-color: #060d10;
+  color: #FCFAF5;
+  margin-bottom: 1ex; }
+
+.cryptid-house {
+  background-image: url("img/Cryptid_house.png");
+  background-repeat: no-repeat;
+  background-position: top;
+  background-size: 100% 100%;
+  background-color: #79c7c2; }
+
+.cryptid-cream {
+  color: #000 !important;
+  background-color: #FCFAF5 !important; }
+
+.cryptid-valign-middle {
+  vertical-align: middle; }
+
+.cryptid-hide {
+  display: none; }
+
+.cryptid-heightblock {
+  min-height: 3em !important; }
+
+.cryptid-maxwidth {
+  max-width: 1600px;
+  margin: auto; }
+
+.cryptid-title-bg {
+  background-color: #B3C08A; }
+
+ol.cryptid-list {
+  counter-reset: li;
+  margin-left: 0;
+  padding-left: 0; }
+
+ol.cryptid-list > li {
+  position: relative;
+  margin: 0 0 6px 2em;
+  padding: 4px 8px;
+  list-style: none; }
+
+ol.cryptid-list > li::before {
+  content: counter(li);
+  counter-increment: li;
+  position: absolute;
+  top: -2px;
+  left: -2em;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  margin-right: 8px;
+  padding: 4px;
+  color: white;
+  background: darkgray;
+  font-weight: bold;
+  font-family: 'Alegreya', serif;
+  border-radius: 50%;
+  width: 2em;
+  text-align: center; }
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px; }
+
+/* Hide default HTML checkbox */
+.switch input {
+  display: none; }
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #79c7c2;
+  -webkit-transition: .4s;
+  transition: .4s; }
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: #FCFAF5;
+  -webkit-transition: .4s;
+  transition: .4s; }
+
+input:checked + .slider {
+  background-color: #dbe388; }
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #dbe388; }
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px); }
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px; }
+
+.slider.round:before {
+  border-radius: 50%; }
+
+.cryptid-title-size {
+  font-size: 20px; }
+
+.cryptid-tut-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 1ex; }
+
+.cryptid-tut-x {
+  float: right;
+  margin-left: 1.5em;
+  margin-bottom: 1.5em;
+  font-weight: bold;
+  cursor: pointer; }
+
+.cryptid-tut {
+  background: #dbe388; }
+
+.cryptid-alt-highlight {
+  background-color: #693311;
+  color: #FCFAF5; }
+
+.cryptid-music-icon {
+  padding: 10px; }
+
+.cryptid-music-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 1ex; }
+
+.cryptid-music-toggle {
+  display: flex;
+  justify-content: space-between; }
+
+.cryptid-music-toggle div:first-of-type {
+  margin-right: 2ex; }
+
+.cryptid-offline-details td {
+  width: 50%;
+  padding: 1ex; }
+
+div.tick {
+  font-weight: bold;
+  font-family: 'Alegreya', serif;
+  border-radius: 50%;
+  text-align: center;
+  width: 1.5em;
+  line-height: 1.5em;
+  background: #4CAF50;
+  color: white; }
+
+div.cross {
+  font-weight: bold;
+  font-family: 'Alegreya', serif;
+  text-align: center;
+  width: 1.5em;
+  line-height: 1.5em;
+  background: #f44336;
+  color: white; }
+
+div.cryptid-lang-menu {
+  display: flex;
+  padding-left: 16px; }
+  div.cryptid-lang-menu img {
+    margin-bottom: 0px;
+    vertical-align: middle; }
+  div.cryptid-lang-menu select {
+    margin-left: 8px;
+    color: black; }
+
+@media (max-width: 600px) {
+  .cryptid-background {
+    padding-top: 4em; } }
+
+@media (max-width: 1300px) {
+  .cryptid-music-buttons {
+    flex-direction: column;
+    align-items: center; }
+  .cryptid-music-buttons div {
+    margin-bottom: 1ex; }
+  .cryptid-music-toggle {
+    justify-content: center; }
+  #music-buttons {
+    order: 1; }
+  #osprey-logo {
+    order: 2; } }
+
+@media (max-width: 880px) {
+  .cryptid-music-toggle {
+    flex-direction: column; } }
