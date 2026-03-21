@@ -26,6 +26,7 @@ function GameController() {
   let keepMap;
   let gameStore;
   let gameActive      = false;
+  let storeFilled     = false;
   let clueReminderState = 0;        // Tracks reminder FSM state
 
   const errMgr = new ErrorManager();
@@ -161,11 +162,16 @@ function GameController() {
       });
     }
 
-    // Always fill the store in the background — needed even when a shared
-    // game was loaded directly (in which case the !gameActive guard would
-    // have prevented this from running, leaving the store empty on end).
-    gameStore.fillGameStore();
-    gameStore.replaceEmpty();
+    // Fill the store in the background, unless the page was loaded in
+    // player-view mode (?game=X&player=N) — in that case the user won't
+    // reach the new-game dialog from this session, so defer generation
+    // until end() is called.
+    const urlParams = window.cryptid.sharing.parseUrlParams();
+    if (!urlParams.game) {
+      storeFilled = true;
+      gameStore.fillGameStore();
+      gameStore.replaceEmpty();
+    }
 
     // Attach clue and reminder button handlers
     $('#clueButton').click(function () {
@@ -201,20 +207,39 @@ function GameController() {
 
     // Get a new game unless keepMap is set and the current game is still valid.
     // currentGame.players may be absent when it was a synthetic shared-game object.
-    if (
+    const needNewGame = (
       !this.getKeepMap() ||
       currentGame === undefined ||
       !currentGame.players ||
       currentGame.mode !== this.getMode() ||
       currentGame.players[this.getPlayers()].length < 1
-    ) {
-      if (currentGame !== undefined) {
-        errMgr.addError(translateString('error_map_change', null));
-        try {
-          currentGame.save();
-        } catch (e) {}
+    );
+
+    if (needNewGame) {
+      let newGame = null;
+
+      // If keepMap is on and the current map code is known, try to generate
+      // a new game with the same tile layout but fresh structure positions.
+      if (this.getKeepMap() && currentGame !== undefined && currentGame.mapCode) {
+        newGame = gameStore.generateWithTileKey(
+          currentGame.mapCode.substring(0, 6),
+          this.getMode()
+        );
       }
-      currentGame = gameStore.getRandomGame(this.getMode(), this.getPlayers());
+
+      if (newGame) {
+        // Same tile layout, different structures — save the old record but no notification.
+        try { currentGame.save(); } catch (e) {}
+      } else {
+        // Completely different map — notify the user and fall back to the store.
+        if (currentGame !== undefined) {
+          errMgr.addError(translateString('error_map_change', null));
+          try { currentGame.save(); } catch (e) {}
+        }
+        newGame = gameStore.getRandomGame(this.getMode(), this.getPlayers());
+      }
+
+      currentGame = newGame;
     }
 
     currentSetup = currentGame.popRandomSetup(this.getMode(), this.getPlayers());
@@ -519,6 +544,13 @@ function GameController() {
   this.end = function () {
     $('.game-gameplay').hide();
     $('.game-start').show();
+    this.showDiv('#newGameDialog');
+    this.hideDiv('#loadingDialog');
+    if (!storeFilled) {
+      storeFilled = true;
+      gameStore.fillGameStore();
+      gameStore.replaceEmpty();
+    }
     $('#keepMapToggle').show();
     window.cryptid.myTut.showStep(0);
     gameActive = false;

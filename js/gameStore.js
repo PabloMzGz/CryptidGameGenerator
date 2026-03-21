@@ -66,18 +66,13 @@ function GameRecord() {
     const idx = Math.floor(Math.random() * pool.length);
     const popped = pool.splice(idx, 1);
 
-    // Keep 2-player and 4-player pools deduplicated against each other
-    if (players == 2) {
-      const rulesKey = popped[0].rules.join(',');
-      this.players[4] = this.players[4].filter(function (setup) {
-        return rulesKey !== setup.rules.join(',');
-      });
+    // 2-player and 4-player share the same pool (identical content, same order).
+    // Remove the same index from the mirror pool to keep them in sync.
+    if (players == 2 && this.players[4] && idx < this.players[4].length) {
+      this.players[4].splice(idx, 1);
     }
-    if (players == 4) {
-      const rulesKey = popped[0].rules.join(',');
-      this.players[2] = this.players[2].filter(function (setup) {
-        return rulesKey !== setup.rules.join(',');
-      });
+    if (players == 4 && this.players[2] && idx < this.players[2].length) {
+      this.players[2].splice(idx, 1);
     }
 
     return popped;
@@ -359,6 +354,23 @@ function GameStore() {
   /** @returns {Object} Raw mode store object. */
   this.getGameStore = function () {
     return modes;
+  };
+
+  /**
+   * Generate a game on-the-fly with the same tile layout but new random
+   * structure positions.  Used by the "keep map" feature when the current
+   * game's setups are exhausted.
+   *
+   * @param {string} tileKey - First 6 chars of the current map code.
+   * @param {string} m       - 'intro' | 'normal'
+   * @returns {GameRecord|null}
+   */
+  this.generateWithTileKey = function (tileKey, m) {
+    const data = generateGameWithTileKey(tileKey, m);
+    if (!data) return null;
+    const record = new GameRecord();
+    record.create(data);
+    return record;
   };
 
   /**

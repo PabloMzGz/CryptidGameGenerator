@@ -11,11 +11,11 @@
 const Settings = function () {
   this.defaults = {
     gameLimit: 20,
-    tutorial: true,
+    tutorial: false,
     players: 4,
     advanced: false,
     bgm: false,
-    sfx: true,
+    sfx: false,
     store: false,
     keep: true,
     lang: langCode,

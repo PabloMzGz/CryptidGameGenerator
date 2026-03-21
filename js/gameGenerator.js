@@ -427,6 +427,62 @@ function tryGenerateSetup(n, clueList, satisfySets, allHexKeys) {
 
   if (found === null) return null;
 
+  // Validate every clue is individually necessary: removing any single clue
+  // must leave more than one satisfying hex (otherwise that clue is redundant).
+  for (let i = 0; i < found.length; i++) {
+    const without = found.filter(function (_, j) { return j !== i; });
+    let inter = allHexSet;
+    for (let k = 0; k < without.length; k++) {
+      const next = new Set();
+      inter.forEach(function (key) {
+        if (satisfySets[without[k]].has(key)) next.add(key);
+      });
+      inter = next;
+    }
+    if (inter.size === 1) return null; // clue i was redundant
+  }
+
+  // For 4-clue setups (2-player games): reorder clues so that the two pairs
+  // (indices 0+1 vs 2+3) are as balanced as possible in satisfying-set size,
+  // giving both players a similar amount of information.
+  if (n === 4) {
+    const pairings = [
+      [[0, 1], [2, 3]],
+      [[0, 2], [1, 3]],
+      [[0, 3], [1, 2]],
+    ];
+
+    function pairIntersectionSize(idxA, idxB) {
+      let inter = allHexSet;
+      [found[idxA], found[idxB]].forEach(function (clue) {
+        const next = new Set();
+        inter.forEach(function (key) {
+          if (satisfySets[clue].has(key)) next.add(key);
+        });
+        inter = next;
+      });
+      return inter.size;
+    }
+
+    let bestDiff = Infinity;
+    let bestOrder = found.slice();
+
+    pairings.forEach(function (pairing) {
+      const sizeA = pairIntersectionSize(pairing[0][0], pairing[0][1]);
+      const sizeB = pairIntersectionSize(pairing[1][0], pairing[1][1]);
+      const diff  = Math.abs(sizeA - sizeB);
+      if (diff < bestDiff) {
+        bestDiff  = diff;
+        bestOrder = [
+          found[pairing[0][0]], found[pairing[0][1]],
+          found[pairing[1][0]], found[pairing[1][1]],
+        ];
+      }
+    });
+
+    found = bestOrder;
+  }
+
   const hint = deriveHint(found);
   return { destination: targetKey, rules: found, hint };
 }
@@ -524,50 +580,94 @@ function generateRandomMapCode() {
  * @returns {{mapCode:string, mode:string, key:string, players:Object}}
  * @throws {Error} If generation fails after all retries.
  */
-function generateGame(mode) {
-  const isAdvanced = (mode === 'normal');
-  const clueList   = isAdvanced ? ADVANCED_CLUES : INTRO_CLUES;
+/**
+ * Inner attempt: try to generate a full game data object for one specific mapCode.
+ * Returns the data object on success, or null if valid setups could not be found.
+ *
+ * @param {string}   mapCode
+ * @param {string}   mode
+ * @param {string[]} clueList
+ * @returns {{mapCode, mode, key, players}|null}
+ */
+function _tryGenerateOnMap(mapCode, mode, clueList) {
+  const boardState = buildBoardState(mapCode);
+  const structs    = parseStructures(mapCode);
+  const satSets    = computeAllSatisfyingSets(clueList, boardState, structs);
+  const allHexKeys = getAllHexes().map(function (h) { return h.col + ',' + h.row; });
 
-  for (let attempt = 0; attempt < GEN_MAX_MAP_ATTEMPTS; attempt++) {
-    const mapCode    = generateRandomMapCode();
-    const boardState = buildBoardState(mapCode);
-    const structs    = parseStructures(mapCode);
-    const satSets    = computeAllSatisfyingSets(clueList, boardState, structs);
-    const allHexKeys = getAllHexes().map(function (h) { return h.col + ',' + h.row; });
+  const players = {};
 
-    const players = {};
-    let success = true;
+  const playerCounts = [3, 4, 5];
+  for (let pi = 0; pi < playerCounts.length; pi++) {
+    const count  = playerCounts[pi];
+    const setups = [];
 
-    // Generate setups for each player count
-    const playerCounts = [3, 4, 5, 2];
-    for (let pi = 0; pi < playerCounts.length; pi++) {
-      const count  = playerCounts[pi];
-      const clueN  = count === 2 ? 4 : count; // 2-player uses 4 clues (2 per player)
-      const setups = [];
-
-      for (let t = 0; t < GEN_MAX_TARGET_ATTEMPTS && setups.length < GEN_SETUPS_PER_COUNT; t++) {
-        const setup = tryGenerateSetup(clueN, clueList, satSets, allHexKeys);
-        if (setup !== null) {
-          // Avoid duplicate destinations within the same player-count pool
-          const duplicate = setups.some(function (s) { return s.destination === setup.destination; });
-          if (!duplicate) setups.push(setup);
-        }
+    for (let t = 0; t < GEN_MAX_TARGET_ATTEMPTS && setups.length < GEN_SETUPS_PER_COUNT; t++) {
+      const setup = tryGenerateSetup(count, clueList, satSets, allHexKeys);
+      if (setup !== null) {
+        const duplicate = setups.some(function (s) { return s.destination === setup.destination; });
+        if (!duplicate) setups.push(setup);
       }
-
-      if (setups.length === 0) {
-        success = false;
-        break;
-      }
-
-      players[count] = setups;
     }
 
-    if (!success) continue; // Try a different map
+    if (setups.length === 0) return null;
+    players[count] = setups;
+  }
 
-    const key = mode === 'intro' ? 'intro_' + mapCode : mapCode;
+  // 2-player shares the 4-player pool: copy so serialisation produces
+  // independent arrays (same content, same index order).
+  players[2] = players[4].map(function (s) {
+    return { destination: s.destination, rules: s.rules.slice(), hint: s.hint };
+  });
 
-    return { mapCode, mode, key, players };
+  const key = mode === 'intro' ? 'intro_' + mapCode : mapCode;
+  return { mapCode, mode, key, players };
+}
+
+/**
+ * Generate a complete game data object compatible with GameRecord.create().
+ *
+ * Retries up to GEN_MAX_MAP_ATTEMPTS times with different map layouts if it
+ * cannot find valid setups for all player counts.
+ *
+ * @param {string} mode - 'intro' | 'normal'
+ * @returns {{mapCode:string, mode:string, key:string, players:Object}}
+ * @throws {Error} If generation fails after all retries.
+ */
+function generateGame(mode) {
+  const clueList = mode === 'normal' ? ADVANCED_CLUES : INTRO_CLUES;
+
+  for (let attempt = 0; attempt < GEN_MAX_MAP_ATTEMPTS; attempt++) {
+    const result = _tryGenerateOnMap(generateRandomMapCode(), mode, clueList);
+    if (result) return result;
   }
 
   throw new Error('gameGenerator: failed to produce a valid game after ' + GEN_MAX_MAP_ATTEMPTS + ' attempts');
+}
+
+/**
+ * Generate a game keeping the same tile layout (first 6 chars of a map key)
+ * but with new random structure positions.  Used by the "keep map" feature
+ * when the current game's setups are exhausted.
+ *
+ * @param {string} tileKey - First 6 characters of a map code (tile designs).
+ * @param {string} mode    - 'intro' | 'normal'
+ * @returns {{mapCode, mode, key, players}|null}  null if generation failed.
+ */
+function generateGameWithTileKey(tileKey, mode) {
+  const clueList    = mode === 'normal' ? ADVANCED_CLUES : INTRO_CLUES;
+  const tileDesigns = [];
+  for (let i = 0; i < 6; i++) {
+    tileDesigns.push(parseInt(tileKey[i], 16));
+  }
+
+  for (let attempt = 0; attempt < GEN_MAX_MAP_ATTEMPTS; attempt++) {
+    const hexPool = getAllHexes().slice();
+    shuffleArray(hexPool);
+    const mapCode = buildMapKey(tileDesigns, hexPool.slice(0, 8));
+    const result  = _tryGenerateOnMap(mapCode, mode, clueList);
+    if (result) return result;
+  }
+
+  return null; // Caller falls back to a fully random game
 }
