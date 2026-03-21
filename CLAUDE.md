@@ -1,4 +1,4 @@
-# CLAUDE.md — Cryptid Game Generator (Client-Side Fork)
+﻿# CLAUDE.md — Cryptid Game Generator (Client-Side Fork)
 
 ## Project Overview
 
@@ -75,8 +75,8 @@ cryptid/
 ### Tile Data (defined in mapData.js or gameGenerator.js)
 Each of the 12 tiles has a fixed terrain layout. There are 6 base tiles; tiles 7–12 are the 180° rotations of tiles 1–6 respectively. Each hex within a tile has one of 5 terrain types, and optionally an animal territory overlay.
 
-**Terrain types:** `F` = forest, `W` = water, `D` = desert, `M` = mountain, `S` = swamp (called "bone" internally)
-**Animal territory:** `B` = bear (dormant fissure), `C` = cougar (active fissure). Notation: `DB` = desert + bear, `FC` = forest + cougar, etc.
+**Terrain types:** `F` = forest, `W` = water, `D` = desert, `M` = mountain, `S` = swamp
+**Animal territory:** `B` = bear, `C` = cougar. Notation: `DB` = desert + bear, `FC` = forest + cougar, etc.
 
 **Tile orientation:** Dot is in the top-left corner. Column 1 row 1 = top-left hex. Each tile is 6 columns × 3 rows. Rows are separated by `/`.
 
@@ -108,8 +108,8 @@ const TILES = [
 
 ### Structures
 There are 8 structures placed on the map, encoded in the map code after the 6 tile chars:
-- 4 **standing stones** (pyramids) — colors: green, blue, white (called "red" internally), black
-- 4 **shacks** (colonies) — colors: green, blue, white (called "red" internally), black
+- 4 **standing stones** — colors: green, blue, white, black
+- 4 **shacks** — colors: green, blue, white, black
 - In normal/intro mode, black structures are NOT used (only 6 structures active)
 - In advanced/normal mode, all 8 structures are used
 - Structure images: `s1.png`–`s4.png` (standing stones), `p1.png`–`p4.png` (shacks)
@@ -118,21 +118,21 @@ There are 8 structures placed on the map, encoded in the map code after the 6 ti
 These are the `data-tkey` values used for clue text. They represent the possible clue a player can receive:
 
 **Terrain proximity ("within X spaces"):**
-- `within_forest`, `within_water`, `within_bone`, `within_mountain`, `within_desert` — "within one space of [terrain]"
+- `within_forest`, `within_water`, `within_swamp`, `within_mountain`, `within_desert` — "within one space of [terrain]"
 
 **Structure proximity:**
-- `within_pyramid` — within 2 spaces of a standing stone
-- `within_colony` — within 2 spaces of a shack
-- `within_green`, `within_blue`, `within_red`, `within_black` — within 3 spaces of [color] structure
+- `within_stone` — within 2 spaces of a standing stone
+- `within_shack` — within 2 spaces of a shack
+- `within_green`, `within_blue`, `within_white`, `within_black` — within 3 spaces of [color] structure
 
 **Animal territory proximity:**
-- `within_fissure` — within 1 space of either animal territory
-- `within_active_fissure` — within 2 spaces of cougar territory
-- `within_dormant_fissure` — within 2 spaces of bear territory
+- `within_animal` — within 1 space of either animal territory
+- `within_animal_cougar` — within 2 spaces of cougar territory
+- `within_animal_bear` — within 2 spaces of bear territory
 
 **Terrain combinations ("on X or Y"):**
-- `desert_or_bone`, `forest_or_mountain`, `forest_or_bone`, `mountain_or_bone`
-- `water_or_desert`, `water_or_forest`, `water_or_bone`, `water_or_mountain`
+- `desert_or_swamp`, `forest_or_mountain`, `forest_or_swamp`, `mountain_or_swamp`
+- `water_or_desert`, `water_or_forest`, `water_or_swamp`, `water_or_mountain`
 - `forest_or_desert`, `desert_or_mountain`
 
 **Advanced mode adds negations** of the above (prefixed with "not_" in logic, displayed as "the habitat is NOT...").
@@ -143,8 +143,8 @@ Each game setup has a hint — a meta-clue about which clue categories are NOT p
 - `hint_not_on_on` — no "on terrain or terrain" clues
 - `hint_structures` — no structure-related clues
 - `hint_terrain` — no terrain-type clues
-- `hint_fissure` — no animal territory clues
-- `hint_bone`, `hint_mountain`, `hint_desert`, `hint_forest`, `hint_water` — no clues mentioning that terrain
+- `hint_animal` — no animal territory clues
+- `hint_swamp`, `hint_mountain`, `hint_desert`, `hint_forest`, `hint_water` — no clues mentioning that terrain
 
 ### Two-Player Mode
 When `players = 2`, each player gets 2 clues (4 rules total, same as 4-player). The clue display logic groups them in pairs. The 2-player setups share rules with 4-player setups — they're filtered to be non-overlapping.
@@ -199,25 +199,25 @@ The game code is a **hexadecimal string** with fixed-width positional fields. No
 ```
 00 = within_forest
 01 = within_water
-02 = within_bone
+02 = within_swamp
 03 = within_mountain
 04 = within_desert
-05 = within_fissure
-06 = within_active_fissure
-07 = within_dormant_fissure
-08 = within_pyramid
-09 = within_colony
+05 = within_animal
+06 = within_animal_cougar
+07 = within_animal_bear
+08 = within_stone
+09 = within_shack
 0A = within_green
 0B = within_blue
-0C = within_red
+0C = within_white
 0D = within_black
-0E = desert_or_bone
+0E = desert_or_swamp
 0F = forest_or_mountain
-10 = forest_or_bone
-11 = mountain_or_bone
+10 = forest_or_swamp
+11 = mountain_or_swamp
 12 = water_or_desert
 13 = water_or_forest
-14 = water_or_bone
+14 = water_or_swamp
 15 = water_or_mountain
 16 = forest_or_desert
 17 = desert_or_mountain

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * mapData.js — Tile image paths, hex geometry constants, and structure image paths.
  *
  * Exposes three data objects consumed by mapRenderer.js:
@@ -9,8 +9,8 @@
  * Also exposes window.cryptid.map_arrays — the terrain/animal data for each of
  * the 12 tile designs.  Each tile is a flat array of 18 entries (6 cols × 3 rows,
  * row-major).  Each entry is [terrainIndex, animalIndex] where:
- *   terrainIndex : 0=water, 1=forest, 2=desert, 3=mountain, 4=swamp/bone
- *   animalIndex  : 0=none, 1=cougar (active fissure), 2=bear (dormant fissure)
+ *   terrainIndex : 0=water, 1=forest, 2=desert, 3=mountain, 4=swamp
+ *   animalIndex  : 0=none, 1=cougar 2=bear
  */
 
 /** Tile artwork paths indexed by breakpoint, then by tile index 0–11. */
@@ -127,9 +127,9 @@ const HEX_CONFIG = {
     hex_s: 110 / 9.5,
     hex_ds: 17.36842105263158,
     hex_h: Math.sqrt(3) * (110 / 9.5),
-    fissure_draw: false,
-    fissure_active_idx: 0,
-    fissure_dormant_idx: 0,
+    animal_draw: false,
+    animal_cougar_idx: 0,
+    animal_bear_idx: 0,
     canvas_width: 260,
     canvas_height: 210,
     dot_height: 0,
@@ -143,9 +143,9 @@ const HEX_CONFIG = {
     hex_s: 178 / 9.5,
     hex_ds: 28.105263157894736,
     hex_h: Math.sqrt(3) * (178 / 9.5),
-    fissure_draw: true,
-    fissure_active_idx: 5,
-    fissure_dormant_idx: 6,
+    animal_draw: true,
+    animal_cougar_idx: 5,
+    animal_bear_idx: 6,
     canvas_width: 400,
     canvas_height: 320,
     dot_height: 7,
@@ -159,7 +159,7 @@ const HEX_CONFIG = {
     hex_s: 248 / 9.5,
     hex_ds: 39.1578947368421,
     hex_h: Math.sqrt(3) * (248 / 9.5),
-    fissure_draw: true,
+    animal_draw: true,
     canvas_width: 550,
     canvas_height: 450,
     dot_height: 10,
@@ -175,7 +175,7 @@ const HEX_CONFIG = {
 /**
  * Terrain/animal data for tiles 1–12 (stored at indices 0–11).
  * Each tile is a flat array of 18 [terrainIndex, animalIndex] pairs:
- *   terrainIndex : 0=water, 1=forest, 2=desert, 3=mountain, 4=swamp/bone
+ *   terrainIndex : 0=water, 1=forest, 2=desert, 3=mountain, 4=swamp
  *   animalIndex  : 0=none, 1=bear (dormant), 2=cougar (active)
  *
  * Layout order: row 1 cols 1–6, row 2 cols 1–6, row 3 cols 1–6.

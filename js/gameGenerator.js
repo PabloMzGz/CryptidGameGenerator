@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gameGenerator.js — Client-side game generation engine.
  *
  * Replaces the server-side getGame.php.  Generates valid Cryptid game setups
@@ -34,25 +34,25 @@ const GEN_MAX_TARGET_ATTEMPTS = 200;
 const NORMAL_CLUES = [
   'within_forest',
   'within_water',
-  'within_bone',
+  'within_swamp',
   'within_mountain',
   'within_desert',
-  'within_fissure',
-  'within_active_fissure',
-  'within_dormant_fissure',
-  'within_pyramid',
-  'within_colony',
+  'within_animal',
+  'within_animal_cougar',
+  'within_animal_bear',
+  'within_stone',
+  'within_shack',
   'within_green',
   'within_blue',
-  'within_red',
+  'within_white',
   'within_black',
-  'desert_or_bone',
+  'desert_or_swamp',
   'forest_or_mountain',
-  'forest_or_bone',
-  'mountain_or_bone',
+  'forest_or_swamp',
+  'mountain_or_swamp',
   'water_or_desert',
   'water_or_forest',
-  'water_or_bone',
+  'water_or_swamp',
   'water_or_mountain',
   'forest_or_desert',
   'desert_or_mountain',
@@ -84,19 +84,19 @@ const HINT_GROUPS = {
     'within_water', 'not_within_water',
     'water_or_desert', 'not_water_or_desert',
     'water_or_forest', 'not_water_or_forest',
-    'water_or_bone', 'not_water_or_bone',
+    'water_or_swamp', 'not_water_or_swamp',
     'water_or_mountain', 'not_water_or_mountain',
   ],
   hint_forest: [
     'within_forest', 'not_within_forest',
     'forest_or_mountain', 'not_forest_or_mountain',
-    'forest_or_bone', 'not_forest_or_bone',
+    'forest_or_swamp', 'not_forest_or_swamp',
     'water_or_forest', 'not_water_or_forest',
     'forest_or_desert', 'not_forest_or_desert',
   ],
   hint_desert: [
     'within_desert', 'not_within_desert',
-    'desert_or_bone', 'not_desert_or_bone',
+    'desert_or_swamp', 'not_desert_or_swamp',
     'water_or_desert', 'not_water_or_desert',
     'forest_or_desert', 'not_forest_or_desert',
     'desert_or_mountain', 'not_desert_or_mountain',
@@ -104,65 +104,65 @@ const HINT_GROUPS = {
   hint_mountain: [
     'within_mountain', 'not_within_mountain',
     'forest_or_mountain', 'not_forest_or_mountain',
-    'mountain_or_bone', 'not_mountain_or_bone',
+    'mountain_or_swamp', 'not_mountain_or_swamp',
     'water_or_mountain', 'not_water_or_mountain',
     'desert_or_mountain', 'not_desert_or_mountain',
   ],
-  hint_bone: [
-    'within_bone', 'not_within_bone',
-    'desert_or_bone', 'not_desert_or_bone',
-    'forest_or_bone', 'not_forest_or_bone',
-    'mountain_or_bone', 'not_mountain_or_bone',
-    'water_or_bone', 'not_water_or_bone',
+  hint_swamp: [
+    'within_swamp', 'not_within_swamp',
+    'desert_or_swamp', 'not_desert_or_swamp',
+    'forest_or_swamp', 'not_forest_or_swamp',
+    'mountain_or_swamp', 'not_mountain_or_swamp',
+    'water_or_swamp', 'not_water_or_swamp',
   ],
-  hint_fissure: [
-    'within_fissure', 'not_within_fissure',
-    'within_active_fissure', 'not_within_active_fissure',
-    'within_dormant_fissure', 'not_within_dormant_fissure',
+  hint_animal: [
+    'within_animal', 'not_within_animal',
+    'within_animal_cougar', 'not_within_animal_cougar',
+    'within_animal_bear', 'not_within_animal_bear',
   ],
   hint_structures: [
-    'within_pyramid', 'not_within_pyramid',
-    'within_colony', 'not_within_colony',
+    'within_stone', 'not_within_stone',
+    'within_shack', 'not_within_shack',
     'within_green', 'not_within_green',
     'within_blue', 'not_within_blue',
-    'within_red', 'not_within_red',
+    'within_white', 'not_within_white',
     'within_black', 'not_within_black',
   ],
   hint_terrain: [
     'within_forest', 'not_within_forest',
     'within_water', 'not_within_water',
-    'within_bone', 'not_within_bone',
+    'within_swamp', 'not_within_swamp',
     'within_mountain', 'not_within_mountain',
     'within_desert', 'not_within_desert',
   ],
   hint_not_1: [
     'within_forest', 'not_within_forest',
     'within_water', 'not_within_water',
-    'within_bone', 'not_within_bone',
+    'within_swamp', 'not_within_swamp',
     'within_mountain', 'not_within_mountain',
     'within_desert', 'not_within_desert',
-    'within_fissure', 'not_within_fissure',
+    'within_animal', 'not_within_animal',
   ],
   hint_not_2: [
-    'within_pyramid', 'not_within_pyramid',
-    'within_colony', 'not_within_colony',
-    'within_active_fissure', 'not_within_active_fissure',
-    'within_dormant_fissure', 'not_within_dormant_fissure',
+    'within_stone', 'not_within_stone',
+    'within_shack', 'not_within_shack',
+    'within_animal_cougar', 'not_within_animal_cougar',
+    'within_animal_bear', 'not_within_animal_bear',
   ],
   hint_not_3: [
     'within_green', 'not_within_green',
     'within_blue', 'not_within_blue',
-    'within_red', 'not_within_red',
+    'within_white', 'not_within_white',
     'within_black', 'not_within_black',
   ],
   hint_not_on_on: [
-    'desert_or_bone', 'not_desert_or_bone',
+    'desert_or_swamp', 'not_desert_or_swamp',
     'forest_or_mountain', 'not_forest_or_mountain',
-    'forest_or_bone', 'not_forest_or_bone',
-    'mountain_or_bone', 'not_mountain_or_bone',
+    'forest_or_swamp', 'not_forest_or_swamp',
+    'mountain_or_swamp', 'not_mountain_or_swamp',
     'water_or_desert', 'not_water_or_desert',
     'water_or_forest', 'not_water_or_forest',
-    'water_or_bone', 'not_water_or_bone',
+    'water_or_swamp', 'not_water_or_swamp',
     'water_or_mountain', 'not_water_or_mountain',
     'forest_or_desert', 'not_forest_or_desert',
     'desert_or_mountain', 'not_desert_or_mountain',
@@ -175,8 +175,8 @@ const HINT_GROUPS = {
  * is used.
  */
 const HINT_PRIORITY = [
-  'hint_water', 'hint_forest', 'hint_desert', 'hint_mountain', 'hint_bone',
-  'hint_fissure', 'hint_structures', 'hint_terrain',
+  'hint_water', 'hint_forest', 'hint_desert', 'hint_mountain', 'hint_swamp',
+  'hint_animal', 'hint_structures', 'hint_terrain',
   'hint_not_1', 'hint_not_2', 'hint_not_3', 'hint_not_on_on',
 ];
 
@@ -283,28 +283,28 @@ function hexSatisfiesClue(col, row, clue, boardState, structs) {
     // Terrain proximity — within 1
     case 'within_forest':   return isWithinTerrain(col, row, TERRAIN.FOREST,   1, boardState);
     case 'within_water':    return isWithinTerrain(col, row, TERRAIN.WATER,    1, boardState);
-    case 'within_bone':     return isWithinTerrain(col, row, TERRAIN.SWAMP,    1, boardState);
+    case 'within_swamp':    return isWithinTerrain(col, row, TERRAIN.SWAMP,    1, boardState);
     case 'within_mountain': return isWithinTerrain(col, row, TERRAIN.MOUNTAIN, 1, boardState);
     case 'within_desert':   return isWithinTerrain(col, row, TERRAIN.DESERT,   1, boardState);
     // Animal territory
-    case 'within_fissure':          return isWithinAnimal(col, row, null,          1, boardState);
-    case 'within_active_fissure':   return isWithinAnimal(col, row, ANIMAL.COUGAR, 2, boardState);
-    case 'within_dormant_fissure':  return isWithinAnimal(col, row, ANIMAL.BEAR,   2, boardState);
+    case 'within_animal':        return isWithinAnimal(col, row, null,          1, boardState);
+    case 'within_animal_cougar': return isWithinAnimal(col, row, ANIMAL.COUGAR, 2, boardState);
+    case 'within_animal_bear':   return isWithinAnimal(col, row, ANIMAL.BEAR,   2, boardState);
     // Structure proximity
-    case 'within_pyramid': return isWithinStructure(col, row, 'stone', null,    2, structs);
-    case 'within_colony':  return isWithinStructure(col, row, 'shack', null,    2, structs);
-    case 'within_green':   return isWithinStructure(col, row, null,    'green', 3, structs);
-    case 'within_blue':    return isWithinStructure(col, row, null,    'blue',  3, structs);
-    case 'within_red':     return isWithinStructure(col, row, null,    'white', 3, structs);
-    case 'within_black':   return isWithinStructure(col, row, null,    'black', 3, structs);
+    case 'within_stone': return isWithinStructure(col, row, 'stone', null,    2, structs);
+    case 'within_shack': return isWithinStructure(col, row, 'shack', null,    2, structs);
+    case 'within_green': return isWithinStructure(col, row, null,    'green', 3, structs);
+    case 'within_blue':  return isWithinStructure(col, row, null,    'blue',  3, structs);
+    case 'within_white': return isWithinStructure(col, row, null,    'white', 3, structs);
+    case 'within_black': return isWithinStructure(col, row, null,    'black', 3, structs);
     // Terrain combinations (on hex's own terrain)
-    case 'desert_or_bone':     return d.terrain === TERRAIN.DESERT   || d.terrain === TERRAIN.SWAMP;
+    case 'desert_or_swamp':    return d.terrain === TERRAIN.DESERT   || d.terrain === TERRAIN.SWAMP;
     case 'forest_or_mountain': return d.terrain === TERRAIN.FOREST   || d.terrain === TERRAIN.MOUNTAIN;
-    case 'forest_or_bone':     return d.terrain === TERRAIN.FOREST   || d.terrain === TERRAIN.SWAMP;
-    case 'mountain_or_bone':   return d.terrain === TERRAIN.MOUNTAIN || d.terrain === TERRAIN.SWAMP;
+    case 'forest_or_swamp':    return d.terrain === TERRAIN.FOREST   || d.terrain === TERRAIN.SWAMP;
+    case 'mountain_or_swamp':  return d.terrain === TERRAIN.MOUNTAIN || d.terrain === TERRAIN.SWAMP;
     case 'water_or_desert':    return d.terrain === TERRAIN.WATER    || d.terrain === TERRAIN.DESERT;
     case 'water_or_forest':    return d.terrain === TERRAIN.WATER    || d.terrain === TERRAIN.FOREST;
-    case 'water_or_bone':      return d.terrain === TERRAIN.WATER    || d.terrain === TERRAIN.SWAMP;
+    case 'water_or_swamp':     return d.terrain === TERRAIN.WATER    || d.terrain === TERRAIN.SWAMP;
     case 'water_or_mountain':  return d.terrain === TERRAIN.WATER    || d.terrain === TERRAIN.MOUNTAIN;
     case 'forest_or_desert':   return d.terrain === TERRAIN.FOREST   || d.terrain === TERRAIN.DESERT;
     case 'desert_or_mountain': return d.terrain === TERRAIN.DESERT   || d.terrain === TERRAIN.MOUNTAIN;
@@ -591,7 +591,10 @@ function generateRandomMapCode() {
  */
 function _tryGenerateOnMap(mapCode, mode, clueList) {
   const boardState = buildBoardState(mapCode);
-  const structs    = parseStructures(mapCode);
+  const allStructs = parseStructures(mapCode);
+  const structs    = mode === 'intro'
+    ? allStructs.filter(function (s) { return s.color !== 'black'; })
+    : allStructs;
   const satSets    = computeAllSatisfyingSets(clueList, boardState, structs);
   const allHexKeys = getAllHexes().map(function (h) { return h.col + ',' + h.row; });
 

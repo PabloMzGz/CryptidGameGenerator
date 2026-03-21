@@ -1,4 +1,4 @@
-/**
+﻿/**
  * sharing.js — Game code encoding/decoding & URL parameter handling.
  *
  * Provides:
@@ -23,50 +23,50 @@
 const CLUE_LIST = [
   'within_forest',             // 00
   'within_water',              // 01
-  'within_bone',               // 02
+  'within_swamp',              // 02
   'within_mountain',           // 03
   'within_desert',             // 04
-  'within_fissure',            // 05
-  'within_active_fissure',     // 06
-  'within_dormant_fissure',    // 07
-  'within_pyramid',            // 08
-  'within_colony',             // 09
+  'within_animal',             // 05
+  'within_animal_cougar',      // 06
+  'within_animal_bear',        // 07
+  'within_stone',              // 08
+  'within_shack',              // 09
   'within_green',              // 0a
   'within_blue',               // 0b
-  'within_red',                // 0c
+  'within_white',              // 0c
   'within_black',              // 0d
-  'desert_or_bone',            // 0e
+  'desert_or_swamp',           // 0e
   'forest_or_mountain',        // 0f
-  'forest_or_bone',            // 10
-  'mountain_or_bone',          // 11
+  'forest_or_swamp',           // 10
+  'mountain_or_swamp',         // 11
   'water_or_desert',           // 12
   'water_or_forest',           // 13
-  'water_or_bone',             // 14
+  'water_or_swamp',            // 14
   'water_or_mountain',         // 15
   'forest_or_desert',          // 16
   'desert_or_mountain',        // 17
   // Advanced negations
   'not_within_forest',         // 18
   'not_within_water',          // 19
-  'not_within_bone',           // 1a
+  'not_within_swamp',          // 1a
   'not_within_mountain',       // 1b
   'not_within_desert',         // 1c
-  'not_within_fissure',        // 1d
-  'not_within_active_fissure', // 1e
-  'not_within_dormant_fissure',// 1f
-  'not_within_pyramid',        // 20
-  'not_within_colony',         // 21
+  'not_within_animal',         // 1d
+  'not_within_animal_cougar',  // 1e
+  'not_within_animal_bear',    // 1f
+  'not_within_stone',          // 20
+  'not_within_shack',          // 21
   'not_within_green',          // 22
   'not_within_blue',           // 23
-  'not_within_red',            // 24
+  'not_within_white',          // 24
   'not_within_black',          // 25
-  'not_desert_or_bone',        // 26
+  'not_desert_or_swamp',       // 26
   'not_forest_or_mountain',    // 27
-  'not_forest_or_bone',        // 28
-  'not_mountain_or_bone',      // 29
+  'not_forest_or_swamp',       // 28
+  'not_mountain_or_swamp',     // 29
   'not_water_or_desert',       // 2a
   'not_water_or_forest',       // 2b
-  'not_water_or_bone',         // 2c
+  'not_water_or_swamp',        // 2c
   'not_water_or_mountain',     // 2d
   'not_forest_or_desert',      // 2e
   'not_desert_or_mountain',    // 2f
@@ -167,7 +167,10 @@ function decodeGame(code) {
  */
 function findTarget(mapKey, rules) {
   const boardState = buildBoardState(mapKey);
-  const structs    = parseStructures(mapKey);
+  const allStructs = parseStructures(mapKey);
+  const structs    = mapKey.startsWith('intro_')
+    ? allStructs.filter(function (s) { return s.color !== 'black'; })
+    : allStructs;
   const hexes      = getAllHexes();
 
   for (let i = 0; i < hexes.length; i++) {
