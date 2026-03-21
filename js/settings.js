@@ -32,16 +32,6 @@ const Settings = function () {
   });
 
   this.setHandlers();
-  this.setOfflineFuncs();
-  this.OFFLINE_DIV = 'settings-elements';
-  this.ticker = null;
-
-  // When store is disabled, remove the settings cookie
-  this.listen('store', function () {
-    if (!self.settings.store) {
-      Cookies.remove('cryptid-settings');
-    }
-  });
 
   // Show/hide two-player warning and tutorial panel on player count change
   this.listen('players', function () {
@@ -163,63 +153,3 @@ Settings.prototype.setHandlers = function () {
   });
 };
 
-/**
- * Attach show/hide data callbacks to the offline settings panel.
- */
-Settings.prototype.setOfflineFuncs = function () {
-  const self = this;
-  $('#offline-elements')
-    .data('show', function () { self.offlineShow(); })
-    .data('hide', function () { self.offlineHide(); });
-};
-
-/**
- * Async: fetch offline status summary and update the status panel.
- */
-Settings.prototype.offlineSummary = async function () {
-  window.cryptid.game.getGameStore().summaryInfo().then(function (info) {
-    let appcache = false;
-    try {
-      appcache = window.applicationCache.status !== window.applicationCache.UNCACHED;
-    } catch (e) {
-      appcache = false;
-    }
-
-    const statusMap = {
-      appcache: appcache,
-      storage: info.offline,
-      storageType: info.storage,
-      storageEnabled: window.cryptid.settings.get('store'),
-      countStandard: info.counts.offlineStandard,
-      countAdvanced: info.counts.offlineAdvanced,
-      version: window.cryptid.cryptid_version,
-    };
-
-    $('[data-offline]').each(function (idx, el) {
-      let val = statusMap[$(el).data('offline')];
-      if (typeof val === typeof true) {
-        val = '<div class="w3-large' + (val ? ' tick">\u2714' : ' cross">\u2716') + '</div>';
-      }
-      $(el).empty().append(val);
-    });
-
-    if (statusMap.appcache && statusMap.storage && statusMap.storageEnabled) {
-      $('.offline-working').show();
-      $('.offline-not-working').hide();
-    } else {
-      $('.offline-working').hide();
-      $('.offline-not-working').show();
-    }
-  });
-};
-
-/** Start polling the offline summary every 500 ms. */
-Settings.prototype.offlineShow = function () {
-  this.ticker = setInterval(this.offlineSummary.bind(this), 500);
-  this.offlineSummary();
-};
-
-/** Stop polling the offline summary. */
-Settings.prototype.offlineHide = function () {
-  clearInterval(this.ticker);
-};

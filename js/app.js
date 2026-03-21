@@ -3,7 +3,7 @@
  *
  * Bootstraps the Cryptid companion application on DOM ready:
  *   1. Creates the Settings singleton (window.cryptid.settings)
- *   2. Creates the Menu controller  (window.cryptid.menu)
+ *   2. Creates the Menu controller  (window.cryptid.menu) — burger open/close only
  *   3. Creates the SoundManager     (window.cryptid.soundMngr) and starts BGM
  *   4. Creates the GameController   (window.cryptid.game) and calls init()
  *   5. Populates language dropdowns
@@ -14,7 +14,6 @@
  *  10. Creates the MapRenderer       (window.cryptid.map) and auto-sizes it
  *  11. Attaches window resize handler
  *  12. Enables the Start button
- *  13. Attaches privacy policy expand/collapse handlers
  *
  * Depends on: jQuery, all other js/ modules, lang_settings.js
  */
@@ -26,68 +25,21 @@
 
 /** @class MenuController */
 const MenuController = function () {
-  this.CHUNK_CLASS  = '.menu-chunk';
   this.MOBILE_MENU  = '#mobile_side_menu';
   this.MOBILE_OPEN  = '.mobile-burger';
   this.MOBILE_CLOSE = '#mobile_side_close';
-  this.list         = this.buildList();
   this.attachHandlers();
 };
 
-/** Build the list of menu section descriptors from the DOM. */
-MenuController.prototype.buildList = function () {
-  const list = [];
-  $(this.CHUNK_CLASS).each(function (idx, el) {
-    list.push({ id: $(el).attr('id'), element: el });
-  });
-  return list;
-};
-
-/** Attach click handlers to menu items and burger buttons. */
+/** Attach burger open/close handlers. */
 MenuController.prototype.attachHandlers = function () {
   const self = this;
-  $('[data-menuchunk]').click(function () {
-    self.showSection($(this).data('menuchunk'));
-  });
   $(this.MOBILE_OPEN).click(function () {
     self.showBurger();
   });
   $(this.MOBILE_CLOSE).click(function () {
     self.hideBurger();
   });
-};
-
-/**
- * Show the menu section identified by chunkId and hide all others.
- * @param {string} chunkId - The id of the section to show.
- */
-MenuController.prototype.showSection = function (chunkId) {
-  const match = this.list.filter(function (item) {
-    return item.id === chunkId;
-  });
-
-  if (match.length > 0) {
-    this.list.forEach(function (item) {
-      let callback = null;
-      if (item.id === chunkId) {
-        $(item.element).show();
-        callback = $(item.element).data('show');
-      } else {
-        $(item.element).hide();
-        callback = $(item.element).data('hide');
-      }
-      if (typeof callback !== 'undefined') {
-        try {
-          callback();
-        } catch (e) {
-          console.log('Error running function on chunk display');
-        }
-      }
-    });
-    this.hideBurger();
-  } else {
-    console.log('Invalid menuchunk in link');
-  }
 };
 
 /** Show the mobile side menu. */
@@ -104,18 +56,8 @@ MenuController.prototype.hideBurger = function () {
 // Application bootstrap
 // ---------------------------------------------------------------------------
 
-// Register service worker / appcache update listener before DOM ready
 window.addEventListener('load', function () {
   new ErrorManager();
-  try {
-    window.applicationCache.addEventListener('updateready', function () {
-      if (window.applicationCache.status === window.applicationCache.UPDATEREADY) {
-        window.location.reload();
-      }
-    }, false);
-  } catch (e) {
-    // No applicationCache in modern browsers — ignore
-  }
 }, false);
 
 $(document).ready(function () {
@@ -223,13 +165,4 @@ $(document).ready(function () {
   // 13. Apply URL parameters (?lang, ?game, ?player)
   window.cryptid.sharing.applyUrlParams();
 
-  // 14. Privacy policy expand/collapse
-  $('.privacy-expand').click(function () {
-    const target = $('#' + $(this).data('expandid'));
-    const icon   = $(this).find('.privacy-expand-icon');
-    $(target).slideToggle('slow', function () {
-      const arrow = $(target).is(':visible') ? '[-]' : '[+]';
-      $(icon).text(arrow);
-    });
-  });
 });

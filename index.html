@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html manifest="cryptid.appcache">
+﻿<!DOCTYPE html>
+<html>
 	<head>
 		<title>Cryptid</title>
 		<meta charset="UTF-8">
@@ -16,7 +16,6 @@
 		</style>
 		<script src="js/lib/jquery-3.3.1.min.js"></script>
 		<script src="js/lib/howler.min.js"></script>
-		<script src="js/lib/localforage.min.js"></script>
 		<script src="js/lib/js.cookies.js"></script>
 		<script src="lang_settings.js"></script>
 		<!-- Cryptid modules (replaces cryptid.3.min.js) -->
@@ -33,74 +32,39 @@
 	<script src="js/game.js"></script>
 	<script src="js/sharing.js"></script>
 	<script src="js/app.js"></script>
-		<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
-		<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
-		<script>
-			window.addEventListener("load", function () {
-				try {
-					var message = translate_string('cookie_consent_message');
-					var allow = translate_string('cookie_consent_allow');
-					var decline = translate_string('cookie_consent_deny');
-					window.cookieconsent.initialise({
-						"palette": {
-							"popup": {
-								"background": "#fcfaf5"
-							},
-							"button": {
-								"background": "#79c7c2"
-							}
-						},
-						"type": "opt-in",
-						"content": {
-							"message": message,
-							"dismiss": decline,
-							"allow": allow
-						},
-						"showLink": false,
-						onStatusChange: function(status, prev) {
-							var bool_status = status === "allow";
-							if(bool_status !== settings.get('store')) {
-								settings.set('store', bool_status);
-							} 
-							if (!bool_status) {
-								Cookies.remove('cookieconsent_status');
-							}
-						},
-						revokeBtn: '<span></span>'
-					});
-				} catch (err) {
-					//working offline
-				}
-		});
-		function openPolicy() {
-			window.cryptid.menu.showSection('cookie-elements');
-		}
-		</script>
 		<link rel="icon" type="image/png" href="./img/favicon.png">
 	</head>
     <body class="cryptid-background">
-		<!-- MOBILE SIDE MENU -->
-		<div class="w3-sidebar w3-bar-block w3-border-right w3-animate-left cryptid-highlight" style="display:none" id="mobile_side_menu">
-			<button id="mobile_side_close" class="w3-bar-item w3-large">Close &times;</button>
-			<div data-tkey="menu_home" data-menuchunk="game-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-			<a href="https://ospreypublishing.com/cryptid_rules" target="_blank">
-				<div data-tkey="menu_learn" data-menuchunk="learn-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-			</a>
-			<div data-tkey="menu_offline" data-menuchunk="offline-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-			<a href="https://ospreypublishing.com/store/osprey-games/board-card-games/cryptid" target="_blank">
-				<div data-tkey="menu_buy" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight">
-					Buy Cryptid
-				</div>
-			</a>
-			<div data-tkey="menu_privacy" data-menuchunk="privacy-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-			<div data-tkey="menu_cookie" data-menuchunk="cookie-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-			<div data-tkey="menu_about" data-menuchunk="about-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-			<div class="cryptid-highlight cryptid-hover-highlight cryptid-lang-menu lang-highlight">
-				<label for="menuLangMob"><img src="img/flags/en.png" class="lang-flag"></label>
-				<select id="menuLangMob" data-setting="lang" class="cryptid-hover-highlight cryptid-highlight lang-highlight lang-drop">
-				</select>
-			</div>
+	<!-- MOBILE SIDE MENU -->
+	<div class="w3-sidebar w3-bar-block w3-border-right w3-animate-left cryptid-highlight" style="display:none" id="mobile_side_menu">
+		<button id="mobile_side_close" class="w3-bar-item w3-large">Close &times;</button>
+		<div class="w3-bar-item cryptid-highlight">
+			<label class="switch cryptid-valign-middle w3-margin-right">
+				<input type="checkbox" id="mob_tutorial" data-setting="tutorial">
+				<span class="slider round"></span>
+			</label>
+			<span data-tkey="settings_tutorial_label"></span>
 		</div>
+		<div class="w3-bar-item cryptid-highlight">
+			<label class="switch cryptid-valign-middle w3-margin-right">
+				<input type="checkbox" id="mob_bgm" data-setting="bgm">
+				<span class="slider round"></span>
+			</label>
+			<span data-tkey="general_bgm"></span>
+		</div>
+		<div class="w3-bar-item cryptid-highlight">
+			<label class="switch cryptid-valign-middle w3-margin-right">
+				<input type="checkbox" id="mob_sfx" data-setting="sfx">
+				<span class="slider round"></span>
+			</label>
+			<span data-tkey="general_sfx"></span>
+		</div>
+		<div class="cryptid-highlight cryptid-hover-highlight cryptid-lang-menu lang-highlight">
+			<label for="menuLangMob"><img src="img/flags/en.png" class="lang-flag"></label>
+			<select id="menuLangMob" data-setting="lang" class="cryptid-hover-highlight cryptid-highlight lang-highlight lang-drop">
+			</select>
+		</div>
+	</div>
 		
 		<!-- MOBILE MENU -->
         <div class="w3-top w3-hide-medium w3-hide-large" id="mobile_top_menu">
@@ -126,29 +90,37 @@
 			<div class="w3-row-padding">
 				<!-- DESKTOP MENU -->
 				<div class="w3-third w3-hide-small w3-center" id="menuPanelLarge">
-					<div id="menuLarge" class="w3-card w3-bar-block cryptid-cream w3-margin-bottom">
-						<div id="logoDisplayLarge" class="cryptid-house">
-							<img src="img/Cryptid_Title.png" id="logoLargeImg" alt="Cryptid Logo" style="max-width: 100%; max-height: 100%;">
-						</div>
-						<div data-tkey="menu_home" data-menuchunk="game-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-						<a href="https://ospreypublishing.com/cryptid_rules" target="_blank" data-tkey="link_learn">
-							<div data-tkey="menu_learn" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-						</a>
-						<div data-tkey="menu_offline" data-menuchunk="offline-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-						<a href="https://ospreypublishing.com/store/osprey-games/board-card-games/cryptid" target="_blank" data-tkey="link_buy">
-							<div data-tkey="menu_buy" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight">
-								Buy Cryptid
-							</div>
-						</a>
-						<div data-tkey="menu_privacy" data-menuchunk="privacy-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-						<div data-tkey="menu_cookie" data-menuchunk="cookie-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-						<div data-tkey="menu_about" data-menuchunk="about-elements" class="w3-bar-item w3-button cryptid-highlight cryptid-hover-highlight"></div>
-						<div class="cryptid-highlight cryptid-hover-highlight cryptid-lang-menu">
-							<label for="menuLang"><img src="img/flags/en.png" class="lang-flag"></label>
-							<select id="menuLang" data-setting="lang" class="cryptid-hover-highlight cryptid-highlight lang-drop">
-							</select>
-						</div>
+				<div id="menuLarge" class="w3-card w3-bar-block cryptid-cream w3-margin-bottom">
+					<div id="logoDisplayLarge" class="cryptid-house">
+						<img src="img/Cryptid_Title.png" id="logoLargeImg" alt="Cryptid Logo" style="max-width: 100%; max-height: 100%;">
 					</div>
+					<div class="w3-bar-item cryptid-highlight">
+						<label class="switch cryptid-valign-middle w3-margin-right">
+							<input type="checkbox" id="desk_tutorial" data-setting="tutorial">
+							<span class="slider round"></span>
+						</label>
+						<span data-tkey="settings_tutorial_label"></span>
+					</div>
+					<div class="w3-bar-item cryptid-highlight">
+						<label class="switch cryptid-valign-middle w3-margin-right">
+							<input type="checkbox" id="desk_bgm" data-setting="bgm">
+							<span class="slider round"></span>
+						</label>
+						<span data-tkey="general_bgm"></span>
+					</div>
+					<div class="w3-bar-item cryptid-highlight">
+						<label class="switch cryptid-valign-middle w3-margin-right">
+							<input type="checkbox" id="desk_sfx" data-setting="sfx">
+							<span class="slider round"></span>
+						</label>
+						<span data-tkey="general_sfx"></span>
+					</div>
+					<div class="cryptid-highlight cryptid-hover-highlight cryptid-lang-menu">
+						<label for="menuLang"><img src="img/flags/en.png" class="lang-flag"></label>
+						<select id="menuLang" data-setting="lang" class="cryptid-hover-highlight cryptid-highlight lang-drop">
+						</select>
+					</div>
+				</div>
 					<div id="mapAnchor"></div>
 					<div class="w3-left-align cryptid-music-buttons">
 						<div id="osprey-logo">
@@ -156,28 +128,12 @@
 								<img src="img/logos/en.large.png" style="margin-bottom: -10px" class="logo" data-size="large">
 							</a>
 						</div>
-						<div id="music-buttons" class="cryptid-music-toggle">
-							<div>
-								<label class="switch cryptid-valign-middle w3-margin-right">
-									<input type="checkbox" id="bgm" data-setting="bgm">
-									<span class="slider round"></span>
-								</label>
-								<label id="bgmLabel" for="bgm"><img src="img/bgmsmall.png" alt="Background Music" style="margin-bottom: -12px"></label>
-							</div>
-							<div>
-								<label class="switch cryptid-valign-middle w3-margin-right">
-									<input type="checkbox" id="sfx" data-setting="sfx">
-									<span class="slider round"></span>
-								</label>
-								<label id="sfxLabel" for="sfx"><img src="img/sfx.png" alt="Sound Effects" style="margin-bottom: -12px"></label>
-							</div>
-						</div>
 					</div>
 				</div>
 
 
 				<div class="w3-twothird w3-center" id="mainPanel">
-					<div id="game-elements" class="menu-chunk">
+					<div id="game-elements">
 
 					<!-- Tutorial panel -->
 					<div id="tut_container" class="w3-card cryptid-cream w3-margin-bottom cryptid-hide">
@@ -428,154 +384,7 @@
 						</div>
 					</div>
 					</div>
-					
-					<!-- OFFLINE INFO -->
-					<div id="offline-elements" class="cryptid-hide menu-chunk">
-					<div id="tutorialSetting" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="settings_tutorial_title"></h4>
-						</div>
-						<div class="w3-padding w3-left-align">
-							<div>
-								<label for="setting_tutorial_toggle" data-tkey="settings_tutorial_label"></label>
-							</div>
-							<div>
-								<label class="switch cryptid-valign-middle w3-margin-right">
-									<input type="checkbox" id="setting_tutorial_toggle" data-setting="tutorial">
-									<span class="slider round"></span>
-								</label>
-							</div>
-						</div>
-					</div>
-
-					<div id="offlineInfo" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="offline_about_title"></h4>
-						</div>
-						<div class="w3-padding w3-left-align" data-tkey="offline_about_explain">
-						</div>
-					</div>
-
-					<div id="offlineInfo" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="offline_status_title"></h4>
-						</div>
-						<div class="w3-padding w3-left-align">
-						<div class="w3-row">
-			
-								<div class="offline-not-working w3-margin-bottom" data-tkey="offline_status_not_available">
-									
-								</div>
-								<div class="offline-working w3-margin-bottom" data-tkey="offline_status_available">
-									
-								</div>
-								<table class="cryptid-offline-details">
-									<tr>
-										<td colspan="2" class="w3-alegreya w3-large" data-tkey="offline_status_details"></td>
-									</tr>
-									<tr>
-										<td data-tkey="settings_cached"></td>
-										<td data-offline="appcache"></td>
-									</tr>
-									<tr>
-										<td data-tkey="settings_storage"></td>
-										<td data-offline="storage"></td>
-									</tr>
-									<tr>
-										<td data-tkey="settings_storage_enabled"></td>
-										<td data-offline="storageEnabled"></td>
-									</tr>
-									<tr>
-										<td data-tkey="settings_cryptidVersion"></td>
-										<td data-offline="version"></td>
-									</tr>
-	
-									<tr>
-										<td data-tkey="settings_countStandard"></td>
-										<td data-offline="countStandard"></td>
-									</tr>
-									<tr>
-										<td data-tkey="settings_countAdvanced"></td>
-										<td data-offline="countAdvanced"></td>
-									</tr>
-								</table>
-							</div>
-						</div>
-					</div>
-					<div id="offlineInfo" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="offline_status_settings"></h4>
-						</div>
-						<div class="w3-margin-bottom w3-left-align w3-padding">
-							<div>
-								<label for="sttng_offln_enbl" data-tkey="setting_allow_store"></label>
-							</div>
-							<div>
-								<label class="switch cryptid-valign-middle w3-margin-right">
-									<input type="checkbox" id="sttng_offln_enbl" data-setting="store">
-									<span class="slider round"></span>
-								</label>
-							</div>
-						</div>
-						<div class="w3-margin-bottom w3-left-align w3-padding">
-							<div>
-								<label>
-							</div>
-							<input class="w3-input w3-margin-bottom" type="number" min="0" max="200" data-setting="gameLimit">
-							<button id="settingRefresh" class="w3-block w3-button cryptid-highlight cryptid-hover-highlight w3-margin-bottom" data-tkey="settings_refresh" onclick="window.cryptid.game.getGameStore().resetStore()"></button>
-						</div>
-					</div>
-					</div>
-				
-					<!-- ABOUT -->
-					<div id="about-elements" class="cryptid-hide menu-chunk">
-					<div id="about" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="about_title">About</h4>
-						</div>
-						<div class="w3-padding w3-left-align" data-tkey="about_body">
-							<p>OSPREY and OSPREY GAMES are trademarks of Osprey Publishing, a division of Bloomsbury Publishing Plc.</p>
-							<p>© Ruth Veevers &amp; Anthony Duncan, 2018. All rights reserved.
-							<br>
-							Artwork © 2018 Osprey Publishing Ltd. All rights reserved.</p>
-							<p>This website uses the following audio under a creative commons attribution license:
-								<ul>
-									<li>Rotisserie Graveyard by Doctor Turtle</li>
-									<li>Wind Sound by Mark DiAngelo</li>
-								</ul>
-							</p>
-						</div>
-					</div>
-					</div>
-					
-					<!-- PRIVACY POLICY -->
-					<div id="privacy-elements" class="cryptid-hide menu-chunk">
-					<div id="privacy" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small"><span data-tkey="menu_privacy">Privacy Policy</span></h4>
-						</div>
-						<div class="w3-padding w3-left-align" id="privacy-policy-body" data-tkey="privacy_policy">
-							<!-- This will be filled in by the translation script -->
-						</div>
-					</div>
-					</div>
-
-					<!-- COOKIE POLICY -->
-					<div id="cookie-elements" class="cryptid-hide menu-chunk">
-					<div id="cookie" class="w3-card cryptid-cream w3-margin-bottom">
-						<div class="w3-left-align">
-							<h4 class="cryptid-title w3-alegreya w3-padding-small"><span data-tkey="menu_cookie">Cookie Policy</span></h4>
-						</div>
-						<div class="w3-padding w3-left-align policy-body" id="cookie-policy-body" data-tkey="cookie_policy">
-							<!-- Will be filled by translation script -->
-						</div>
-					</div>
-					</div>
-
-					<!-- END MAIN COLUMN -->
-					</div>
 				</div>
 			</div>
         </div>
     </body>
-</html>

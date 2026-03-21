@@ -88,8 +88,9 @@ function GameController() {
    * @param {boolean} hint     - Whether hints are enabled.
    * @param {boolean} keep     - Whether to keep the same map across games.
    */
-  this.init = async function (players, advanced, hint, keep) {
+  this.init = function (players, advanced, hint, keep) {
     const modeStr = advanced ? 'normal' : 'intro';
+    const self = this;
 
     this.setPlayers(players);
     this.setIntro(!advanced);
@@ -97,61 +98,25 @@ function GameController() {
     this.setHint(hint);
 
     gameStore = new GameStore();
-
-    window.cryptid.settings.listen('store', function () {
-      if (window.cryptid.settings.get('store')) {
-        gameStore.commitToStorage();
-      } else {
-        gameStore.removeFromStorage();
-      }
-    });
-
     gameStore.setMode(modeStr);
 
-    let restoredLocal  = false;
-    let fetchedRemote  = false;
-    const errorKeys    = [];
-
-    // Try local storage first
+    let success = false;
     try {
-      restoredLocal = await gameStore.restoreFromLocal();
+      gameStore.generateInitialGames();
+      success = true;
     } catch (err) {
-      restoredLocal = false;
-      errorKeys.push(err);
+      success = false;
     }
 
-    // If local data exists but lacks two-player variant, reset
-    if (restoredLocal && !gameStore.hasTwoPlayer()) {
-      gameStore.resetStore();
-      restoredLocal = false;
-    }
-
-    // If local restore failed, try server
-    if (!restoredLocal) {
-      $(SEL_LOADING_CONTENT).data('tkey', 'loading_local');
-      translateElement($(SEL_LOADING_CONTENT));
-      try {
-        fetchedRemote = await gameStore.fetchFromServer();
-      } catch (err) {
-        fetchedRemote = false;
-        errorKeys.push(err);
-      }
-    }
-
-    const self = this;
-
-    if (restoredLocal || fetchedRemote) {
+    if (success) {
       if (!gameActive) {
         this.showDiv('#newGameDialog');
         this.hideDiv('#loadingDialog');
       }
     } else if (!gameActive) {
-      // Both sources failed — show error UI
+      // Generation failed — show error UI with retry
       $(SEL_LOADING_CONTENT).empty();
       $(SEL_LOADING_CONTENT).append('<div class="load_error w3-margin-bottom" data-tkey="loading_err_intro"></div>');
-      errorKeys.forEach(function (key) {
-        $(SEL_LOADING_CONTENT).append('<div class="load_error w3-margin-bottom" data-tkey="' + key + '"></div>');
-      });
       $('<button class="w3-button w3-block cryptid-highlight cryptid-hover-highlight load_error" data-tkey="general_retry"></button>')
         .appendTo(SEL_LOADING_CONTENT)
         .click(function () {
@@ -227,14 +192,10 @@ function GameController() {
         );
       }
 
-      if (newGame) {
-        // Same tile layout, different structures — save the old record but no notification.
-        try { currentGame.save(); } catch (e) {}
-      } else {
+      if (!newGame) {
         // Completely different map — notify the user and fall back to the store.
         if (currentGame !== undefined) {
           errMgr.addError(translateString('error_map_change', null));
-          try { currentGame.save(); } catch (e) {}
         }
         newGame = gameStore.getRandomGame(this.getMode(), this.getPlayers());
       }
@@ -243,7 +204,6 @@ function GameController() {
     }
 
     currentSetup = currentGame.popRandomSetup(this.getMode(), this.getPlayers());
-    currentGame.save();
 
     window.cryptid.soundMngr.playSound(window.cryptid.soundMngr.START);
 

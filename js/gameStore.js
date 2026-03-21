@@ -1,16 +1,13 @@
 /**
  * gameStore.js — Game store.
  *
- * Manages the pool of available pre-generated game objects, fetched from
- * the server (PHP backend) or restored from localforage offline storage.
+ * Manages the in-memory pool of generated game objects.
  *
  * Key responsibilities:
- *  - Fetch game data from getGame.php
- *  - Persist/restore game data via localforage
+ *  - Generate games client-side on demand
  *  - Serve random games to the game controller
- *  - Report offline availability status
  *
- * Depends on: jQuery, localforage, settings.js
+ * Depends on: gameGenerator.js, settings.js
  */
 
 // ---------------------------------------------------------------------------
@@ -20,7 +17,7 @@
 /** @class GameRecord */
 function GameRecord() {
   /**
-   * Initialise from a plain object (server JSON or localforage entry).
+   * Initialise from a plain object.
    * @param {Object} data
    */
   this.create = function (data) {
@@ -28,27 +25,6 @@ function GameRecord() {
     this.mapCode = data.mapCode;
     this.mode    = data.mode;
     this.players = data.players;
-    this.save();
-  };
-
-  /** @returns {boolean} True if this game has two-player setups. */
-  this.hasTwoPlayer = function () {
-    return this.players.hasOwnProperty('2');
-  };
-
-  /** Persist this game to localforage if storage is allowed. */
-  this.save = function () {
-    const payload = {
-      key:     this.key,
-      mapCode: this.mapCode,
-      mode:    this.mode,
-      players: this.players,
-    };
-    if (window.cryptid.settings.get('store')) {
-      localforage.setItem(this.key, payload).catch(function (err) {
-        console.log(err);
-      });
-    }
   };
 
   /**
@@ -93,16 +69,6 @@ function GameStore() {
   modes.intro  = {};
   modes.normal = {};
 
-  // Error key map for HTTP status codes from the server
-  const HTTP_ERRORS = {
-    0:   'loading_err_unknown',
-    404: 'loading_err_404',
-    500: 'loading_err_server',
-    503: 'loading_err_server_unavailable',
-    502: 'loading_err_gateway',
-    504: 'loading_err_gateway',
-  };
-
   // ---------------------------------------------------------------------------
   // Mode
   // ---------------------------------------------------------------------------
@@ -138,8 +104,8 @@ function GameStore() {
   // ---------------------------------------------------------------------------
 
   /**
-   * Ensure every stored game has setups for all player counts; fetch replacements
-   * for any that are missing.
+   * Ensure every stored game has setups for all player counts; generate
+   * replacements for any that are exhausted.
    */
   this.replaceEmpty = async function () {
     for (let mi = 0; mi < modes.length; mi++) {
@@ -154,34 +120,14 @@ function GameStore() {
           }
         }
         if (needsReplacement) {
-          const fetched = await this.fetchGame(modeKey);
-          if (fetched) {
-            localforage.removeItem(record.key);
-          }
+          await this.fetchGame(modeKey);
         }
       }
     }
   };
 
   /**
-   * Persist all games in all modes to localforage.
-   */
-  this.commitToStorage = function () {
-    for (let i = 0; i < modes.length; i++) {
-      const modeKey = modes[i].toString();
-      for (const key in modes[modeKey]) {
-        modes[modeKey][key].save();
-      }
-    }
-  };
-
-  /** Clear all localforage data. */
-  this.removeFromStorage = function () {
-    localforage.clear();
-  };
-
-  /**
-   * Fill the store with games fetched from the server until gameLimit is reached.
+   * Fill the store with generated games until gameLimit is reached.
    */
   this.fillGameStore = async function () {
     for (let mi = 0; mi < modes.length; mi++) {
@@ -225,76 +171,17 @@ function GameStore() {
   };
 
   // ---------------------------------------------------------------------------
-  // Local storage restore
+  // Initial generation (intro + normal)
   // ---------------------------------------------------------------------------
 
   /**
-   * Restore all games from localforage.
-   * @returns {Promise<boolean>} Resolves true if at least one intro AND one normal game were found.
+   * Generate one game for each mode (intro and normal).
+   * Called once during app initialisation.
+   * @throws {Error} If generation fails.
    */
-  this.restoreFromLocal = function () {
-    const self = this;
-    let introCount = 0;
-    let normalCount = 0;
-    const invalidKeys = [];
-
-    return new Promise(function (resolve, reject) {
-      localforage.iterate(function (value, key) {
-        let valid = true;
-
-        if (!value.hasOwnProperty('key')) {
-          valid = false;
-        }
-        try {
-          if (value.players[3][0].rules[0].indexOf(' ') !== -1) {
-            valid = false;
-          }
-        } catch (e) {
-          valid = false;
-        }
-
-        if (valid) {
-          const record = new GameRecord();
-          record.create(value);
-          self.storeGame(record);
-          if (record.mode === 'intro') {
-            introCount++;
-          } else {
-            normalCount++;
-          }
-        } else {
-          invalidKeys.push(key);
-        }
-      })
-        .then(function () {
-          for (const k in invalidKeys) {
-            localforage.removeItem(invalidKeys[k]);
-          }
-        })
-        .then(function () {
-          resolve(introCount >= 1 && normalCount >= 1);
-        })
-        .catch(function () {
-          reject(false);
-        });
-    });
-  };
-
-  // ---------------------------------------------------------------------------
-  // Fetch from server (intro + normal)
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Fetch one game for each mode (intro and normal).
-   * @returns {Promise<boolean>}
-   */
-  this.fetchFromServer = async function () {
-    const normalOk = await this.fetchGame('normal');
-    const introOk  = await this.fetchGame('intro');
-    if (!introOk || !normalOk) {
-      return false;
-    }
-    return true;
+  this.generateInitialGames = function () {
+    this.storeGame(generateGame('normal'));
+    this.storeGame(generateGame('intro'));
   };
 
   // ---------------------------------------------------------------------------
@@ -321,11 +208,6 @@ function GameStore() {
     const record = new GameRecord();
     record.create(data);
     modes[record.mode][record.key] = record;
-  };
-
-  /** @returns {boolean} True when localforage has a driver available. */
-  this.offlineAvailable = function () {
-    return localforage.driver !== null;
   };
 
   /**
@@ -374,73 +256,12 @@ function GameStore() {
   };
 
   /**
-   * Gather offline summary information.
-   * @returns {Promise<Object>}
-   */
-  this.summaryInfo = function () {
-    const self = this;
-    return new Promise(function (resolve, reject) {
-      const info = {};
-      info.offline = self.offlineAvailable();
-      info.storage = localforage.driver();
-      let introOffline = 0;
-      let normalOffline = 0;
-
-      try {
-        localforage.keys().then(function (keys) {
-          for (const k in keys) {
-            if (keys[k].includes('intro')) {
-              introOffline++;
-            }
-          }
-          normalOffline = keys.length - introOffline;
-          info.counts = {
-            standard:        self.countGames('intro'),
-            advanced:        self.countGames('normal'),
-            offlineStandard: introOffline,
-            offlineAdvanced: normalOffline,
-          };
-          resolve(info);
-        });
-      } catch (err) {
-        reject(err);
-      }
-    });
-  };
-
-  /**
-   * Clear the store and refetch from server.
+   * Clear the store and regenerate.
    */
   this.resetStore = function () {
-    localforage.clear();
     modes.intro  = {};
     modes.normal = {};
     gameLimit = window.cryptid.settings.get('gameLimit');
     this.fillGameStore();
-  };
-
-  /**
-   * Check if any stored normal game has two-player setups.
-   * @returns {boolean}
-   */
-  this.hasTwoPlayer = function () {
-    const firstKey = Object.keys(modes.normal)[0];
-    return modes.normal[firstKey].hasTwoPlayer();
-  };
-
-  /**
-   * Debug helper: remove two-player setups from all stored games.
-   */
-  this.testDropTwo = function () {
-    for (const mi in modes) {
-      const modeStore = modes[modes[mi]];
-      for (const key in modeStore) {
-        const record = modeStore[key];
-        if (record.hasTwoPlayer()) {
-          delete record.players[2];
-          record.save();
-        }
-      }
-    }
   };
 }
