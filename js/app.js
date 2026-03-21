@@ -150,9 +150,12 @@ $(document).ready(function () {
     }
   });
 
-  // 6. Language change listener
+  // 6. Language change listener — persists choice in URL, refreshes share links
   window.cryptid.settings.listen('lang', function () {
-    switchLanguage(window.cryptid.settings.get('lang'));
+    const lang = window.cryptid.settings.get('lang');
+    switchLanguage(lang);
+    window.cryptid.sharing.setUrlParam('lang', lang);
+    window.cryptid.game.refreshSharePanel();
   });
 
   // 7. Mobile flag click: open burger and briefly highlight the language selector
@@ -217,7 +220,10 @@ $(document).ready(function () {
   // 12. Enable start button (was disabled while loading)
   $('#ngfStart').prop('disabled', false);
 
-  // 13. Privacy policy expand/collapse
+  // 13. Apply URL parameters (?lang, ?game, ?player)
+  window.cryptid.sharing.applyUrlParams();
+
+  // 14. Privacy policy expand/collapse
   $('.privacy-expand').click(function () {
     const target = $('#' + $(this).data('expandid'));
     const icon   = $(this).find('.privacy-expand-icon');

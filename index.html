@@ -218,6 +218,17 @@
 					</div>
 
 					<div class="cryptid-hide game-gameplay">
+					<!-- Single-player clue view (loaded via ?player= URL parameter) -->
+					<div id="playerClueDiv" class="w3-card cryptid-cream w3-margin-bottom cryptid-hide">
+						<div class="w3-left-align">
+							<h4 class="cryptid-title w3-alegreya w3-padding-small" id="playerClueHeader" data-tkey="clue_title" data-tpnum="1"></h4>
+						</div>
+						<div class="w3-padding">
+							<div id="playerClueText" class="cryptid-heightblock w3-margin-bottom w3-margin-top w3-left-align cryptid-hide"></div>
+							<button id="playerClueBtn" class="w3-block w3-button cryptid-highlight cryptid-hover-highlight w3-margin-bottom" data-tkey="clue_button_show" data-tpnum="1" onclick="window.cryptid.game.togglePlayerClue()"></button>
+						</div>
+					</div>
+
 					<!-- Setup clue display div -->
 					<div id="clueDiv" class="w3-card cryptid-cream w3-margin-bottom cryptid-hide">
 						<div id="clueTitle" class="w3-left-align">
@@ -242,6 +253,7 @@
 								<span id="reminderClueText" data-tkey="reminder_instruction"></span>
 							</div>
 
+							<button id="passTheDeviceBtn" class="w3-margin-bottom w3-block w3-button cryptid-highlight cryptid-hover-highlight cryptid-hide" data-tkey="reminder_pass_device" onclick="window.cryptid.game.enablePassTheDevice()"></button>
 							<button id="reminder1" data-pnum="1" class="w3-margin-bottom w3-block w3-button cryptid-highlight cryptid-hover-highlight" data-tkey="player_1"></button>
 							<button id="reminder2" data-pnum="2" class="w3-margin-bottom w3-block w3-button cryptid-highlight cryptid-hover-highlight" data-tkey="player_2"></button>
 							<button id="reminder3" data-pnum="3" class="w3-margin-bottom w3-block w3-button cryptid-highlight cryptid-hover-highlight" data-tkey="player_3"></button>
@@ -308,13 +320,34 @@
 						</div>
 					</div>
 					
+					<!-- Sharing panel -->
+					<div id="sharingDiv" class="w3-card cryptid-cream w3-margin-bottom">
+						<div class="w3-left-align">
+							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="share_title"></h4>
+						</div>
+						<div class="w3-padding">
+							<button id="shareBtn" class="w3-block w3-button cryptid-highlight cryptid-hover-highlight w3-margin-bottom" onclick="window.cryptid.game.toggleSharePanel()" data-tkey="share_show_options"></button>
+							<div id="shareOptions" class="cryptid-hide">
+								<div class="w3-margin-bottom">
+									<strong data-tkey="share_code_label"></strong>
+									<div id="shareCode" class="w3-code w3-margin-top w3-margin-bottom" style="word-break:break-all;font-size:0.85em;cursor:pointer;" title="Click to copy code" onclick="window.cryptid.sharing.copyCodeText()"></div>
+									<button id="shareCodeCopy" class="w3-button cryptid-highlight cryptid-hover-highlight" data-tkey="share_copy_link" onclick="window.cryptid.sharing.copyCode()"></button>
+								</div>
+								<div class="w3-margin-top">
+									<strong data-tkey="share_links_label"></strong>
+									<ol id="sharePlayerLinks" class="cryptid-list w3-left-align w3-small"></ol>
+								</div>
+							</div>
+						</div>
+					</div>
+
 					<!-- End game dialog -->
 					<div id="quitGame" class="w3-card cryptid-cream w3-margin-bottom">
 						<div id="quitTitle" class="w3-left-align">
 							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="quit_title"></h4>
 						</div>
 						<div class="w3-padding">
-							<button id="quitButton" class="w3-margin-bottom w3-button w3-margin-top w3-block w3-button cryptid-highlight cryptid-hover-highlight" onclick="window.cryptid.game.endConfirm()" data-tkey="quit_button"></button>
+						<button id="quitButton" class="w3-margin-bottom w3-button w3-margin-top w3-block w3-button cryptid-highlight cryptid-hover-highlight" onclick="window.cryptid.game.endConfirm()" data-tkey="quit_button"></button>
 						</div>
 						<div id="quitConfirm" class="w3-modal">
 							<div class="w3-modal-content cryptid-cream">

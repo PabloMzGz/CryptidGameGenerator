@@ -44,7 +44,7 @@ function translateElement($el) {
  * @returns {string} Translated string.
  */
 function translateString(key, playerNum) {
-  let result = langData[key] || ('Missing key for ' + key);
+  let result = langData[key] || (langs['en'] && langs['en'][key]) || ('Missing key for ' + key);
   if (typeof playerNum !== 'undefined') {
     const playerName = langData['player_' + playerNum];
     result = result.replace('?p?', playerName);

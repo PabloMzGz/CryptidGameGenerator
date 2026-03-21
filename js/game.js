@@ -140,9 +140,11 @@ function GameController() {
     const self = this;
 
     if (restoredLocal || fetchedRemote) {
-      this.showDiv('#newGameDialog');
-      this.hideDiv('#loadingDialog');
-    } else {
+      if (!gameActive) {
+        this.showDiv('#newGameDialog');
+        this.hideDiv('#loadingDialog');
+      }
+    } else if (!gameActive) {
       // Both sources failed — show error UI
       $(SEL_LOADING_CONTENT).empty();
       $(SEL_LOADING_CONTENT).append('<div class="load_error w3-margin-bottom" data-tkey="loading_err_intro"></div>');
@@ -159,6 +161,9 @@ function GameController() {
       });
     }
 
+    // Always fill the store in the background — needed even when a shared
+    // game was loaded directly (in which case the !gameActive guard would
+    // have prevented this from running, leaving the store empty on end).
     gameStore.fillGameStore();
     gameStore.replaceEmpty();
 
@@ -194,10 +199,12 @@ function GameController() {
   this.startGame = function () {
     this.harvestSettings();
 
-    // Get a new game unless keepMap is set and the current game is still valid
+    // Get a new game unless keepMap is set and the current game is still valid.
+    // currentGame.players may be absent when it was a synthetic shared-game object.
     if (
       !this.getKeepMap() ||
       currentGame === undefined ||
+      !currentGame.players ||
       currentGame.mode !== this.getMode() ||
       currentGame.players[this.getPlayers()].length < 1
     ) {
@@ -221,17 +228,31 @@ function GameController() {
     window.cryptid.map.newMapSettings(currentGame.key, !isIntro, currentSetup.target);
     window.cryptid.map.expandMap();
 
-    $(SEL_REMINDER_DIV).slideUp();
-    $(SEL_REVEAL_DIV).slideUp();
-    $(SEL_TARGET_DIV).slideUp();
-    $(SEL_CLUE_TEXT).fadeOut();
+    $(SEL_REMINDER_DIV).hide();
+    $(SEL_REVEAL_DIV).hide();
+    $(SEL_TARGET_DIV).hide();
+    $(SEL_CLUE_DIV).hide();
+    $(SEL_CLUE_TEXT).hide();
+    $(SEL_HINT_DIV).hide();
+    $('#playerClueDiv').hide();
 
     clueReminderState = 0;
-    this.resetReminder();
-
-    $(SEL_HINT_DIV).slideUp();
     this.clueDisplaying = 0;
-    this.showClue();
+    this.startReminderMode();
+
+    // Collapse share options from any prior game (sharingDiv is always visible in gameplay)
+    $('#shareOptions').hide();
+    $('#shareBtn').data('tkey', 'share_show_options');
+    translateElement($('#shareBtn'));
+
+    // Add game code to URL so the game can be shared or reloaded
+    const gameCode = window.cryptid.sharing.encodeGame(
+      currentGame.key,
+      currentGame.mode,
+      playerCount,
+      currentSetup[0].rules
+    );
+    window.cryptid.sharing.setUrlParam('game', gameCode);
 
     window.cryptid.myTut.showStep(3);
     gameActive = true;
@@ -397,7 +418,7 @@ function GameController() {
     const isPlural  = playerCount === 2;
     const pluralSuf = isPlural ? '_plural' : '';
     translateElement($(SEL_REMINDER_TEXT).data('tkey', 'reminder_instruction' + pluralSuf));
-    $(SEL_REMINDER_DIV + ' button').each(function (idx, el) {
+    $(SEL_REMINDER_DIV + ' button[id^="reminder"]').each(function (idx, el) {
       $(el).data('tkey', 'player_' + (idx + 1));
       translateElement(el);
     });
@@ -501,6 +522,258 @@ function GameController() {
     $('#keepMapToggle').show();
     window.cryptid.myTut.showStep(0);
     gameActive = false;
+
+    // Remove ?game and ?player from the URL (keeps ?lang intact).
+    window.cryptid.sharing.setUrlParam('game', null);
+    window.cryptid.sharing.setUrlParam('player', null);
+  };
+
+  // -------------------------------------------------------------------------
+  // Shared-game loading (URL ?game= parameter)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Load a game from a decoded sharing code.
+   * Sets up currentGame / currentSetup and renders the appropriate UI.
+   *
+   * @param {{mapKey:string, mode:string, playerCount:number, rules:string[], hint:string}} decoded
+   * @param {string|null} playerSpec - '1'–'5', '12', '34', or null (reminder mode).
+   */
+  this.loadFromSharedCode = function (decoded, playerSpec) {
+    playerCount = decoded.playerCount;
+    isIntro     = (decoded.mode === 'intro');
+    showHints   = true;
+    keepMap     = false;
+
+    currentGame  = { key: decoded.mapKey, mode: decoded.mode };
+    currentSetup = [{
+      rules:       decoded.rules,
+      destination: window.cryptid.sharing.findTarget(decoded.mapKey, decoded.rules),
+      hint:        decoded.hint,
+    }];
+
+    this.hideDiv('#loadingDialog');
+    this.hideDiv('#newGameDialog');
+    $('.game-gameplay').show();
+    $('.game-start').hide();
+
+    window.cryptid.map.newMapSettings(decoded.mapKey, !isIntro, null);
+    window.cryptid.map.expandMap();
+
+    $(SEL_REMINDER_DIV).hide();
+    $(SEL_REVEAL_DIV).hide();
+    $(SEL_TARGET_DIV).hide();
+    $(SEL_CLUE_DIV).hide();
+    $(SEL_CLUE_TEXT).hide();
+    $(SEL_HINT_DIV).hide();
+    $('#playerClueDiv').hide();
+    $('#shareOptions').hide();
+    $('#shareBtn').data('tkey', 'share_show_options');
+    translateElement($('#shareBtn'));
+
+    clueReminderState = 0;
+    gameActive = true;
+
+    if (playerSpec) {
+      this.showPlayerView(playerSpec);
+    } else {
+      this.startReminderMode();
+    }
+  };
+
+  /**
+   * Show only a single player's clue (URL ?player= parameter).
+   * Supports individual players (1–5) and paired specifiers (12, 34).
+   *
+   * @param {string|number} playerSpec
+   */
+  this.showPlayerView = function (playerSpec) {
+    const spec = String(playerSpec);
+    let clueHtml;
+    let headerKey;
+    let headerPnum;
+
+    if (spec === '12') {
+      clueHtml   = translateString(currentSetup[0].rules[0], null) +
+                   '<br><br>' +
+                   translateString(currentSetup[0].rules[1], null);
+      headerKey  = 'share_players_12';
+      headerPnum = '12';
+    } else if (spec === '34') {
+      clueHtml   = translateString(currentSetup[0].rules[2], null) +
+                   '<br><br>' +
+                   translateString(currentSetup[0].rules[3], null);
+      headerKey  = 'share_players_34';
+      headerPnum = '34';
+    } else {
+      const p = parseInt(spec, 10);
+      if (isNaN(p) || p < 1 || p > playerCount) return;
+      clueHtml   = translateString(currentSetup[0].rules[p - 1], null);
+      headerKey  = playerCount === 2 ? 'clue_title_plural' : 'clue_title';
+      headerPnum = p;
+    }
+
+    const isPlural = (spec === '12' || spec === '34');
+
+    const header = $('#playerClueHeader');
+    header.data('tkey', headerKey);
+    if (headerPnum !== null) {
+      header.data('tpnum', headerPnum);
+    } else {
+      header.removeData('tpnum');
+    }
+    translateElement(header);
+
+    // Populate clue text but keep it hidden — button reveals it
+    $('#playerClueText').html(clueHtml).hide();
+
+    const btn = $('#playerClueBtn');
+    btn.data('tkey', isPlural ? 'clue_button_show_plural' : 'clue_button_show')
+       .data('playerIsPlural', isPlural);
+    if (headerPnum !== null) {
+      btn.data('tpnum', headerPnum);
+    } else {
+      btn.removeData('tpnum');
+    }
+    translateElement(btn);
+
+    $('#playerClueDiv').slideDown('slow');
+  };
+
+  /**
+   * Toggle the player-view clue text shown/hidden.
+   * Called by the onclick of #playerClueBtn.
+   */
+  this.togglePlayerClue = function () {
+    const text     = $('#playerClueText');
+    const btn      = $('#playerClueBtn');
+    const isPlural = btn.data('playerIsPlural');
+
+    if (text.is(':visible')) {
+      text.fadeOut();
+      btn.data('tkey', isPlural ? 'clue_button_show_plural' : 'clue_button_show');
+    } else {
+      text.fadeIn();
+      btn.data('tkey', isPlural ? 'clue_button_hide_plural' : 'clue_button_hide');
+    }
+    translateElement(btn);
+  };
+
+  /**
+   * Show the clue-reminder UI immediately (used when a game is loaded
+   * via URL without a player specifier).
+   * Includes a button to switch to pass-the-device mode.
+   */
+  this.startReminderMode = function () {
+    this.resetReminder();
+    this.createClueReminders();
+    $(SEL_TARGET_DIV).slideDown();
+    this.showHint();
+    $('#passTheDeviceBtn').show();
+  };
+
+  /**
+   * Switch from reminder mode to the sequential pass-the-device clue flow.
+   * Called when the user clicks the "Use pass-the-device mode" button.
+   */
+  this.enablePassTheDevice = function () {
+    $(SEL_REMINDER_DIV).slideUp();
+    $(SEL_TARGET_DIV).slideUp();
+    $(SEL_HINT_DIV).slideUp();
+    clueReminderState  = 0;
+    this.clueDisplaying = 0;
+    $(SEL_CLUE_DIV).slideDown('slow');
+    this.showClue();
+  };
+
+  // -------------------------------------------------------------------------
+  // Sharing UI
+  // -------------------------------------------------------------------------
+
+  /**
+   * Populate the sharing panel content (code + player links) without changing visibility.
+   * @private
+   */
+  this._populateSharePanel = function () {
+    const code    = window.cryptid.sharing.encodeGame(
+      currentGame.key,
+      currentGame.mode,
+      playerCount,
+      currentSetup[0].rules
+    );
+    const gameUrl = window.cryptid.sharing.buildGameUrl(code);
+
+    // Code div — clicking it copies the raw code text
+    $('#shareCode').text(code);
+
+    // Main copy button — copies the full game URL
+    $('#shareCodeCopy')
+      .attr('data-copyurl', gameUrl)
+      .data('tkey', 'share_copy_link');
+    translateElement($('#shareCodeCopy'));
+
+    // Per-player links
+    const entries = window.cryptid.sharing.buildPlayerUrls(code);
+    const list    = $('#sharePlayerLinks').empty();
+
+    entries.forEach(function (entry) {
+      const label = $('<span>').data('tkey', entry.label);
+      if (entry.tpnum !== null) label.data('tpnum', entry.tpnum);
+      translateElement(label);
+
+      const btn = $('<button>')
+        .addClass('w3-button w3-small cryptid-highlight cryptid-hover-highlight w3-margin-left')
+        .data('tkey', 'share_copy_link')
+        .attr('data-copyurl', entry.url);
+      translateElement(btn);
+      btn.on('click', function () {
+        const url  = $(this).attr('data-copyurl');
+        const self = this;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(function () {
+            $(self).data('tkey', 'share_copied');
+            translateElement($(self));
+            setTimeout(function () {
+              $(self).data('tkey', 'share_copy_link');
+              translateElement($(self));
+            }, 2000);
+          });
+        } else {
+          window.prompt(translateString('share_code_label', null), url);
+        }
+      });
+
+      list.append($('<li>').addClass('w3-margin-bottom').append(label).append(btn));
+    });
+  };
+
+  /**
+   * Toggle the share options panel open/closed.
+   * Populates content before opening; collapses on second press.
+   */
+  this.toggleSharePanel = function () {
+    if (!currentGame || !currentSetup) return;
+
+    if ($('#shareOptions').is(':visible')) {
+      $('#shareOptions').slideUp('slow');
+      $('#shareBtn').data('tkey', 'share_show_options');
+      translateElement($('#shareBtn'));
+    } else {
+      this._populateSharePanel();
+      $('#shareOptions').slideDown('slow');
+      $('#shareBtn').data('tkey', 'share_hide_options');
+      translateElement($('#shareBtn'));
+    }
+  };
+
+  /**
+   * Refresh the sharing panel URLs (e.g. after a language change).
+   * No-op if the share options are not currently expanded.
+   */
+  this.refreshSharePanel = function () {
+    if ($('#shareOptions').is(':visible')) {
+      this._populateSharePanel();
+    }
   };
 
   // -------------------------------------------------------------------------

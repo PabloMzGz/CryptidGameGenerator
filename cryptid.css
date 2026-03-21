@@ -327,3 +327,6 @@ div.cryptid-lang-menu {
 @media (max-width: 880px) {
   .cryptid-music-toggle {
     flex-direction: column; } }
+
+/* Share code div — flash green when clicked to copy */#shareCode { transition: background-color 0.2s; }
+#shareCode.share-code-copied { background-color: #d4edda !important; }
