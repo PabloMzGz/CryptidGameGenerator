@@ -330,3 +330,24 @@ div.cryptid-lang-menu {
 
 /* Share code div — flash green when clicked to copy */#shareCode { transition: background-color 0.2s; }
 #shareCode.share-code-copied { background-color: #d4edda !important; }
+
+/* Player color badges (colored square + Greek letter) shown next to clue text */
+.player-badge {
+  display: inline-block;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 3px;
+  text-align: center;
+  line-height: 1.3em;
+  font-weight: bold;
+  font-size: 0.85em;
+  color: #fff;
+  margin-right: 0.35em;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.player-badge-1 { background: #c0392b; }
+.player-badge-2 { background: #27ae60; }
+.player-badge-3 { background: #2980b9; }
+.player-badge-4 { background: #e67e22; }
+.player-badge-5 { background: #8e44ad; }

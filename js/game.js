@@ -15,6 +15,17 @@
  *             i18n.js (translateElement, translateString), errors.js (ErrorManager)
  */
 
+/**
+ * Return an HTML badge showing the player's color and Greek letter.
+ * @param {number} p - Player number (1–5).
+ * @returns {string} HTML string.
+ */
+function playerBadge(p) {
+  const LETTERS = ['α', 'β', 'γ', 'δ', 'ε'];
+  const letter = LETTERS[p - 1] || '';
+  return '<span class="player-badge player-badge-' + p + '">' + letter + '</span>';
+}
+
 /** @class GameController */
 function GameController() {
   // Private state
@@ -291,15 +302,15 @@ function GameController() {
       // Reveal the clue text
       if (playerCount === 2) {
         const clueHtml =
-          translateString(currentSetup[0].rules[ruleIndex], null) +
+          playerBadge(ruleIndex + 1) + translateString(currentSetup[0].rules[ruleIndex], null) +
           '<br><br>' +
-          translateString(currentSetup[0].rules[ruleIndex + 1], null);
+          playerBadge(ruleIndex + 2) + translateString(currentSetup[0].rules[ruleIndex + 1], null);
         $(SEL_CLUE_TEXT).html(clueHtml);
         this.clueDisplaying += 2;
       } else {
         const ruleKey = currentSetup[0].rules[ruleIndex];
         $(SEL_CLUE_TEXT).data('tkey', ruleKey);
-        $(SEL_CLUE_TEXT).html(translateString(ruleKey, null));
+        $(SEL_CLUE_TEXT).html(playerBadge(playerNum) + translateString(ruleKey, null));
       }
       $(SEL_CLUE_TEXT).fadeIn();
       $(SEL_CLUE_BUTTON).data('tkey', hideBtnKey);
@@ -352,10 +363,11 @@ function GameController() {
       btnKey      = 'reminder_button_hide';
       instructKey = 'reminder_instruction_hide' + pluralSuf;
 
+      const firstBadge = playerCount === 2 ? playerBadge(ruleIdx) : playerBadge(pnum);
       let html = "<div id='remindTextTemp' class='w3-block w3-margin-bottom cryptid-hide'>" +
-        translateString(currentSetup[0].rules[ruleIdx - 1], null);
+        firstBadge + translateString(currentSetup[0].rules[ruleIdx - 1], null);
       if (playerCount === 2) {
-        html += '<br><br>' + translateString(currentSetup[0].rules[ruleIdx], null);
+        html += '<br><br>' + playerBadge(ruleIdx + 1) + translateString(currentSetup[0].rules[ruleIdx], null);
       }
       html += '</div>';
       $(btnSel).before(html);
@@ -471,10 +483,10 @@ function GameController() {
   this.revealClues = function () {
     const items = [];
     if (playerCount === 2) {
-      items[0] = translateString(currentSetup[0].rules[0], null) + '<br>' +
-                 translateString(currentSetup[0].rules[1], null);
-      items[1] = translateString(currentSetup[0].rules[2], null) + '<br>' +
-                 translateString(currentSetup[0].rules[3], null);
+      items[0] = playerBadge(1) + translateString(currentSetup[0].rules[0], null) + '<br>' +
+                 playerBadge(2) + translateString(currentSetup[0].rules[1], null);
+      items[1] = playerBadge(3) + translateString(currentSetup[0].rules[2], null) + '<br>' +
+                 playerBadge(4) + translateString(currentSetup[0].rules[3], null);
     } else {
       for (let p = 0; p < playerCount; p++) {
         items[p] = currentSetup[0].rules[p];
@@ -484,7 +496,7 @@ function GameController() {
     $(SEL_REVEAL_LIST).empty();
     for (let p = 0; p < playerCount; p++) {
       const html = '<li><span>' +
-        (playerCount === 2 ? items[p] : translateString(items[p], null)) +
+        (playerCount === 2 ? items[p] : playerBadge(p + 1) + translateString(items[p], null)) +
         '</span></li>';
       $(SEL_REVEAL_LIST).append(html);
     }
@@ -586,21 +598,21 @@ function GameController() {
     let headerPnum;
 
     if (spec === '12') {
-      clueHtml   = translateString(currentSetup[0].rules[0], null) +
+      clueHtml   = playerBadge(1) + translateString(currentSetup[0].rules[0], null) +
                    '<br><br>' +
-                   translateString(currentSetup[0].rules[1], null);
+                   playerBadge(2) + translateString(currentSetup[0].rules[1], null);
       headerKey  = 'share_players_12';
       headerPnum = '12';
     } else if (spec === '34') {
-      clueHtml   = translateString(currentSetup[0].rules[2], null) +
+      clueHtml   = playerBadge(3) + translateString(currentSetup[0].rules[2], null) +
                    '<br><br>' +
-                   translateString(currentSetup[0].rules[3], null);
+                   playerBadge(4) + translateString(currentSetup[0].rules[3], null);
       headerKey  = 'share_players_34';
       headerPnum = '34';
     } else {
       const p = parseInt(spec, 10);
       if (isNaN(p) || p < 1 || p > playerCount) return;
-      clueHtml   = translateString(currentSetup[0].rules[p - 1], null);
+      clueHtml   = playerBadge(p) + translateString(currentSetup[0].rules[p - 1], null);
       headerKey  = playerCount === 2 ? 'clue_title_plural' : 'clue_title';
       headerPnum = p;
     }
