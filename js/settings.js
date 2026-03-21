@@ -16,7 +16,6 @@ const Settings = function () {
     advanced: false,
     bgm: false,
     sfx: false,
-    store: false,
     keep: true,
     lang: langCode,
   };
@@ -82,13 +81,7 @@ Settings.prototype.set = function (key, value) {
   }
   this.notify(key, value);
   this.updateUI(key, value);
-  if (this.settings.store) {
-    Cookies.set('cryptid-settings', this.settings, { expires: 730 });
-    Cookies.set('cookieconsent_status', 'allow', { expires: 730 });
-  } else {
-    Cookies.remove('cryptid-settings');
-    Cookies.remove('cookieconsent_status');
-  }
+  Cookies.set('cryptid-settings', this.settings, { expires: 730 });
 };
 
 /**
