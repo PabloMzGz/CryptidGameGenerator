@@ -2347,8 +2347,8 @@
 		"cookie_consent_allow": "Aceptar cookies",
 		"cookie_consent_deny": "Rechazar",
 		"link_learn": "https://ospreypublishing.com/uk/cryptid-9781472830654/",
-		"link_buy": "https://ospreypublishing.com/uk/cryptid-9781472830654/",
-		"link_home": "https://ospreypublishing.com/uk/osprey-games/"
+		"link_buy": "https://doitgames.com/CRYPTID/",
+		"link_home": "https://doitgames.com/"
 	}
 };
 
