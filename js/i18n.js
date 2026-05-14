@@ -26,6 +26,11 @@ function translateElement($el) {
     translated = translateString(key, undefined);
   }
 
+  const badgeHtml = $($el).data('badgeHtml');
+  if (badgeHtml) {
+    translated = badgeHtml + translated;
+  }
+
   if ($($el).is('input')) {
     $($el).val(translated);
   } else if ($($el).is('a')) {

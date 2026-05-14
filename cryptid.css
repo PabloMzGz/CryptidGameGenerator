@@ -351,3 +351,14 @@ div.cryptid-lang-menu {
 .player-badge-3 { background: #2980b9; }
 .player-badge-4 { background: #e67e22; }
 .player-badge-5 { background: #8e44ad; }
+
+/* Cheat sheet */
+.cheat-icon { vertical-align: middle; flex-shrink: 0; }
+.cheat-legend-section { margin-bottom: 0.25em; }
+.cheat-legend-label { font-weight: bold; display: block; margin-bottom: 0.3em; }
+.cheat-legend-row { display: flex; flex-wrap: wrap; gap: 0.4em 1em; align-items: center; }
+.cheat-legend-item { display: inline-flex; align-items: center; gap: 0.3em; }
+.cheat-group-header { font-weight: bold; color: #333; margin-bottom: 0.2em; font-style: italic; }
+.cheat-clue-list { margin: 0.2em 0 0 1.4em; padding: 0; list-style: disc; }
+.cheat-clue-list li { padding: 1px 0; line-height: 1.4; }
+.cheat-section-title { font-weight: bold; font-size: 0.95em; text-transform: uppercase; letter-spacing: 0.05em; color: #444; margin-bottom: 0.5em; padding-bottom: 0.25em; border-bottom: 1px solid #ccc; }

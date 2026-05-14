@@ -218,6 +218,113 @@
 						</div>
 					</div>
 
+					<!-- Cheat Sheet -->
+					<div id="cheatSheetDiv" class="w3-card cryptid-cream w3-margin-bottom cryptid-hide">
+						<div class="w3-left-align">
+							<h4 class="cryptid-title w3-alegreya w3-padding-small" data-tkey="cheat_title"></h4>
+						</div>
+						<div class="w3-padding">
+							<button id="cheatSheetBtn" class="w3-block w3-button cryptid-highlight cryptid-hover-highlight w3-margin-bottom" onclick="window.cryptid.game.toggleCheatSheet()" data-tkey="cheat_show"></button>
+							<div id="cheatSheetBody" class="cryptid-hide w3-left-align">
+
+								<!-- Topography section -->
+								<div class="cheat-section-title" data-tkey="cheat_section_topography"></div>
+								<div class="w3-margin-bottom">
+									<div class="cheat-legend-section">
+										<span class="w3-small cheat-legend-label" data-tkey="cheat_legend_terrain"></span>
+										<div class="cheat-legend-row">
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 8.66" width="28" height="24"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="#4488cc"/></svg><span class="w3-small" data-tkey="cheat_terrain_water"></span></span>
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 8.66" width="28" height="24"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="#888888"/></svg><span class="w3-small" data-tkey="cheat_terrain_mountain"></span></span>
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 8.66" width="28" height="24"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="#4a9a4a"/></svg><span class="w3-small" data-tkey="cheat_terrain_forest"></span></span>
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 8.66" width="28" height="24"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="#7b52a8"/></svg><span class="w3-small" data-tkey="cheat_terrain_swamp"></span></span>
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 8.66" width="28" height="24"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="#d4b44a"/></svg><span class="w3-small" data-tkey="cheat_terrain_desert"></span></span>
+										</div>
+									</div>
+									<div class="cheat-legend-section w3-margin-top">
+										<span class="w3-small cheat-legend-label" data-tkey="cheat_legend_animal"></span>
+										<div class="cheat-legend-row">
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="-0.7 -0.7 11.4 10.06" width="50" height="43"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="none" stroke="#cc2222" stroke-width="1.2"/></svg><span class="w3-small" data-tkey="cheat_animal_cougar"></span></span>
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="-0.7 -0.7 11.4 10.06" width="50" height="43"><polygon points="2.5,0 7.5,0 10,4.33 7.5,8.66 2.5,8.66 0,4.33" fill="none" stroke="#111111" stroke-width="1.2" stroke-dasharray="2 1.5"/></svg><span class="w3-small" data-tkey="cheat_animal_bear"></span></span>
+										</div>
+									</div>
+									<div class="cheat-legend-section w3-margin-top">
+										<span class="w3-small cheat-legend-label" data-tkey="cheat_legend_structure"></span>
+										<div class="cheat-legend-row">
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 10" width="46" height="46"><polygon points="3,0 7,0 10,3 10,7 7,10 3,10 0,7 0,3" fill="#222222"/></svg><span class="w3-small" data-tkey="cheat_struct_stone"></span></span>
+											<span class="cheat-legend-item"><svg class="cheat-icon" viewBox="0 0 10 10" width="46" height="46"><polygon points="5,0.5 9.5,9.5 0.5,9.5" fill="#222222"/></svg><span class="w3-small" data-tkey="cheat_struct_shack"></span></span>
+										</div>
+									</div>
+								</div>
+
+								<hr class="w3-border-grey w3-margin-top w3-margin-bottom">
+
+								<!-- Clues section -->
+								<div class="cheat-section-title" data-tkey="cheat_section_clues"></div>
+								<div class="cheat-group w3-margin-top">
+									<div class="cheat-group-header w3-small" data-tkey="cheat_group_on"></div>
+									<ul class="cheat-clue-list w3-small">
+										<li data-tkey="forest_or_mountain"></li>
+										<li data-tkey="forest_or_desert"></li>
+										<li data-tkey="forest_or_swamp"></li>
+										<li data-tkey="water_or_forest"></li>
+										<li data-tkey="water_or_desert"></li>
+										<li data-tkey="water_or_swamp"></li>
+										<li data-tkey="water_or_mountain"></li>
+										<li data-tkey="desert_or_swamp"></li>
+										<li data-tkey="desert_or_mountain"></li>
+										<li data-tkey="mountain_or_swamp"></li>
+									</ul>
+								</div>
+
+								<div class="cheat-group w3-margin-top">
+									<div class="cheat-group-header w3-small" data-tkey="cheat_group_within1"></div>
+									<ul class="cheat-clue-list w3-small">
+										<li data-tkey="within_forest"></li>
+										<li data-tkey="within_water"></li>
+										<li data-tkey="within_swamp"></li>
+										<li data-tkey="within_mountain"></li>
+										<li data-tkey="within_desert"></li>
+										<li data-tkey="within_animal"></li>
+									</ul>
+								</div>
+
+								<div class="cheat-group w3-margin-top">
+									<div class="cheat-group-header w3-small" data-tkey="cheat_group_within2"></div>
+									<ul class="cheat-clue-list w3-small">
+										<li data-tkey="within_animal_cougar"></li>
+										<li data-tkey="within_animal_bear"></li>
+										<li data-tkey="within_stone"></li>
+										<li data-tkey="within_shack"></li>
+									</ul>
+								</div>
+
+								<div class="cheat-group w3-margin-top">
+									<div class="cheat-group-header w3-small" data-tkey="cheat_group_within3"></div>
+									<ul class="cheat-clue-list w3-small">
+										<li data-tkey="within_green"></li>
+										<li data-tkey="within_blue"></li>
+										<li data-tkey="within_white"></li>
+										<li data-tkey="within_black"></li>
+									</ul>
+								</div>
+
+								<hr class="w3-border-grey w3-margin-top w3-margin-bottom">
+
+								<!-- Turn actions section -->
+								<div class="cheat-section-title" data-tkey="cheat_section_turns"></div>
+								<p class="w3-margin-top w3-margin-bottom">
+									<strong data-tkey="cheat_turns_ask_title"></strong><br>
+									<span class="w3-small" data-tkey="cheat_turns_ask_body"></span>
+								</p>
+								<p class="w3-margin-bottom">
+									<strong data-tkey="cheat_turns_search_title"></strong><br>
+									<span class="w3-small" data-tkey="cheat_turns_search_body"></span>
+								</p>
+
+							</div>
+						</div>
+					</div>
+
 					<!-- Hint display -->
 					<div id="hintDiv" class="w3-card cryptid-cream w3-margin-bottom cryptid-hide">
 						<div id="hintTitle" class="w3-left-align">
@@ -288,6 +395,8 @@
 									<strong data-tkey="share_code_label"></strong>
 									<div id="shareCode" class="w3-code w3-margin-top w3-margin-bottom" style="word-break:break-all;font-size:0.85em;cursor:pointer;" title="Click to copy code" onclick="window.cryptid.sharing.copyCodeText()"></div>
 									<button id="shareCodeCopy" class="w3-button cryptid-highlight cryptid-hover-highlight" data-tkey="share_copy_link" onclick="window.cryptid.sharing.copyCode()"></button>
+									<button id="shareFormatCycle" class="w3-button w3-small cryptid-highlight cryptid-hover-highlight w3-margin-left" style="padding:2px 8px;" onclick="window.cryptid.game.cycleShareFormat()">↺</button>
+									<span id="shareFormatLabel" class="w3-small w3-margin-left" style="vertical-align:middle;"></span>
 								</div>
 								<div class="w3-margin-top">
 									<strong data-tkey="share_links_label"></strong>

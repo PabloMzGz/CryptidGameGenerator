@@ -26,6 +26,14 @@ function playerBadge(p) {
   return '<span class="player-badge player-badge-' + p + '">' + letter + '</span>';
 }
 
+function playerBadgesForPlayer(pnum, count) {
+  if (count === 2) {
+    const first = (pnum - 1) * 2 + 1;
+    return playerBadge(first) + playerBadge(first + 1);
+  }
+  return playerBadge(pnum);
+}
+
 /** @class GameController */
 function GameController() {
   // Private state
@@ -39,6 +47,7 @@ function GameController() {
   let gameActive      = false;
   let storeFilled     = false;
   let clueReminderState = 0;        // Tracks reminder FSM state
+  let _shareFormat    = 'short';    // 'short' | 'obfuscated' | 'plain'
 
   const errMgr = new ErrorManager();
 
@@ -56,6 +65,7 @@ function GameController() {
   const SEL_TARGET_DIV      = '#targetDisp';
   const SEL_REVEAL_DIV      = '#clueReveal';
   const SEL_REVEAL_LIST     = '#revealList';
+  const SEL_CHEAT_DIV      = '#cheatSheetDiv';
 
   // -------------------------------------------------------------------------
   // Accessors
@@ -230,13 +240,15 @@ function GameController() {
     $(SEL_CLUE_DIV).hide();
     $(SEL_CLUE_TEXT).hide();
     $(SEL_HINT_DIV).hide();
+    $(SEL_CHEAT_DIV).hide();
     $('#playerClueDiv').hide();
 
     clueReminderState = 0;
     this.clueDisplaying = 0;
     this.startReminderMode();
 
-    // Collapse share options from any prior game (sharingDiv is always visible in gameplay)
+    // Collapse share options from any prior game and reset format to default
+    _shareFormat = 'short';
     $('#shareOptions').hide();
     $('#shareBtn').data('tkey', 'share_show_options');
     translateElement($('#shareBtn'));
@@ -285,9 +297,12 @@ function GameController() {
       $(SEL_TARGET_DIV).slideDown();
       this.createClueReminders();
       this.showHint();
+      this.showCheatSheet();
       window.cryptid.myTut.showStep(7);
       return;
     }
+
+    $(SEL_CLUE_BUTTON).data('badgeHtml', playerBadgesForPlayer(playerNum, playerCount));
 
     if (showingHide) {
       // Show the "show clue" button (clue text is hidden)
@@ -334,6 +349,8 @@ function GameController() {
       if (p > playerCount) {
         $(sel).hide();
       } else {
+        $(sel).data('badgeHtml', playerBadgesForPlayer(p, playerCount));
+        translateElement($(sel));
         $(sel).show();
       }
     }
@@ -570,6 +587,7 @@ function GameController() {
     $(SEL_CLUE_DIV).hide();
     $(SEL_CLUE_TEXT).hide();
     $(SEL_HINT_DIV).hide();
+    $(SEL_CHEAT_DIV).hide();
     $('#playerClueDiv').hide();
     $('#shareOptions').hide();
     $('#shareBtn').data('tkey', 'share_show_options');
@@ -632,7 +650,16 @@ function GameController() {
     $('#playerClueText').html(clueHtml).hide();
 
     const btn = $('#playerClueBtn');
-    btn.data('tkey', isPlural ? 'clue_button_show_plural' : 'clue_button_show')
+    let btnBadgeHtml;
+    if (spec === '12') {
+      btnBadgeHtml = playerBadge(1) + playerBadge(2);
+    } else if (spec === '34') {
+      btnBadgeHtml = playerBadge(3) + playerBadge(4);
+    } else {
+      btnBadgeHtml = playerBadge(parseInt(spec, 10));
+    }
+    btn.data('badgeHtml', btnBadgeHtml)
+       .data('tkey', isPlural ? 'clue_button_show_plural' : 'clue_button_show')
        .data('playerIsPlural', isPlural);
     if (headerPnum !== null) {
       btn.data('tpnum', headerPnum);
@@ -642,6 +669,7 @@ function GameController() {
     translateElement(btn);
 
     $('#playerClueDiv').slideDown('slow');
+    this.showCheatSheet();
   };
 
   /**
@@ -673,6 +701,7 @@ function GameController() {
     this.createClueReminders();
     $(SEL_TARGET_DIV).slideDown();
     this.showHint();
+    this.showCheatSheet();
     $('#passTheDeviceBtn').show();
   };
 
@@ -695,17 +724,39 @@ function GameController() {
   // -------------------------------------------------------------------------
 
   /**
+   * Cycle the share format: short → plain → obfuscated → short.
+   * Repopulates the panel immediately if it is open.
+   */
+  this.cycleShareFormat = function () {
+    const ORDER = ['short', 'plain', 'obfuscated'];
+    _shareFormat = ORDER[(ORDER.indexOf(_shareFormat) + 1) % ORDER.length];
+    if ($('#shareOptions').is(':visible')) {
+      this._populateSharePanel();
+    }
+  };
+
+  /**
    * Populate the sharing panel content (code + player links) without changing visibility.
    * @private
    */
   this._populateSharePanel = function () {
+    const LABEL_KEYS = {
+      short:       'share_format_short',
+      plain:       'share_format_plain',
+      obfuscated:  'share_format_obfuscated',
+    };
     const code    = window.cryptid.sharing.encodeGame(
       currentGame.key,
       currentGame.mode,
       playerCount,
-      currentSetup[0].rules
+      currentSetup[0].rules,
+      _shareFormat
     );
     const gameUrl = window.cryptid.sharing.buildGameUrl(code);
+
+    // Update the format label next to the cycle button
+    $('#shareFormatLabel').data('tkey', LABEL_KEYS[_shareFormat]);
+    translateElement($('#shareFormatLabel'));
 
     // Code div — clicking it copies the raw code text
     $('#shareCode').text(code);
@@ -721,8 +772,18 @@ function GameController() {
     const list    = $('#sharePlayerLinks').empty();
 
     entries.forEach(function (entry) {
+      let entryBadge = '';
+      if (entry.label === 'share_players_12') {
+        entryBadge = playerBadge(1) + playerBadge(2);
+      } else if (entry.label === 'share_players_34') {
+        entryBadge = playerBadge(3) + playerBadge(4);
+      } else if (entry.tpnum !== null) {
+        entryBadge = playerBadgesForPlayer(entry.tpnum, playerCount);
+      }
+
       const label = $('<span>').data('tkey', entry.label);
       if (entry.tpnum !== null) label.data('tpnum', entry.tpnum);
+      if (entryBadge) label.data('badgeHtml', entryBadge);
       translateElement(label);
 
       const btn = $('<button>')
@@ -789,4 +850,25 @@ function GameController() {
 
   /** @param {string} selector */
   this.hideDiv = function (selector) { $(selector).hide(); };
+
+  // -------------------------------------------------------------------------
+  // Cheat sheet
+  // -------------------------------------------------------------------------
+
+  this.showCheatSheet = function () {
+    $(SEL_CHEAT_DIV).slideDown();
+  };
+
+  this.toggleCheatSheet = function () {
+    const body = $('#cheatSheetBody');
+    const btn  = $('#cheatSheetBtn');
+    if (body.is(':visible')) {
+      body.slideUp('slow');
+      btn.data('tkey', 'cheat_show');
+    } else {
+      body.slideDown('slow');
+      btn.data('tkey', 'cheat_hide');
+    }
+    translateElement(btn);
+  };
 }

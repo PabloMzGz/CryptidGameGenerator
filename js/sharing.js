@@ -77,27 +77,144 @@ const CLUE_LIST = [
 // ---------------------------------------------------------------------------
 
 /**
- * Game code format (all hex, version 1):
+ * Game code formats:
+ *
+ * Version 1 (plain hex):
  *   [0]    version  — '1'
  *   [1]    mode     — '0' intro | '1' advanced
  *   [2]    players  — '2'–'5'
  *   [3–24] mapKey   — 22-char raw key (no 'intro_' prefix)
  *   [25+]  clues    — 2 chars per clue; count = players (4 clues for 2-player)
+ *   Total lengths: 3p=31, 4p=33, 2p=33, 5p=35
  *
- * Total lengths: 2-player = 33, 3-player = 31, 4-player = 33, 5-player = 35
+ * Version 2 (obfuscated hex):
+ *   [0]    version  — '2'
+ *   [1–4]  salt     — 4 hex chars (16-bit random seed)
+ *   [5+]   payload  — v1 payload XOR'd with keystream from salt
+ *   Total lengths: v1 length + 4 chars
+ *
+ * Version 3 (short, base64url — default):
+ *   [0]    version  — '3'
+ *   [1+]   payload  — v1 payload (bytes after '1') encoded as base64url
+ *   Total lengths: 3p=21, 4p=23, 2p=23, 5p=24
  */
 
 /**
- * Encode the current game into a compact hex string.
+ * XOR each byte of hexStr with a keystream derived from salt16 (LCG).
+ * @param {string} hexStr  - Hex string with even length.
+ * @param {number} salt16  - 16-bit seed value.
+ * @returns {string} XOR'd hex string, same length as input.
+ */
+function _xorHexStream(hexStr, salt16) {
+  let s = salt16 & 0xFFFF;
+  let result = '';
+  for (let i = 0; i < hexStr.length; i += 2) {
+    s = (1664525 * s + 1013904223) & 0xFFFF;
+    const keyByte = s & 0xFF;
+    const dataByte = parseInt(hexStr.substring(i, i + 2), 16);
+    result += ('0' + (dataByte ^ keyByte).toString(16)).slice(-2);
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Base64url helpers for v3 encoding
+// ---------------------------------------------------------------------------
+
+function _hexToBytes(hexStr) {
+  const bytes = new Uint8Array(hexStr.length / 2);
+  for (let i = 0; i < hexStr.length; i += 2) {
+    bytes[i / 2] = parseInt(hexStr.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
+
+function _bytesToHex(bytes) {
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += ('0' + bytes[i].toString(16)).slice(-2);
+  }
+  return hex;
+}
+
+function _bytesToBase64url(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function _base64urlToBytes(str) {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+/**
+ * Encode a v1 code as a compact base64url v3 code.
+ * @param {string} v1Code
+ * @returns {string}
+ */
+function _encodeV3(v1Code) {
+  return '3' + _bytesToBase64url(_hexToBytes(v1Code.substring(1)));
+}
+
+/**
+ * Decode a v3 code back to a v1 code.
+ * @param {string} code
+ * @returns {string|null}
+ */
+function _decodeV3(code) {
+  try {
+    return '1' + _bytesToHex(_base64urlToBytes(code.substring(1)));
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Wrap a v1 code in v2 obfuscation using a random salt.
+ * @param {string} v1Code - A valid version-1 game code.
+ * @returns {string} Version-2 obfuscated game code.
+ */
+function _encodeV2(v1Code) {
+  const payload = v1Code.substring(1); // strip '1' version byte
+  const salt16  = Math.floor(Math.random() * 0x10000);
+  const saltStr = ('000' + salt16.toString(16)).slice(-4);
+  return '2' + saltStr + _xorHexStream(payload, salt16);
+}
+
+/**
+ * Unwrap a v2 code back to a v1 code.
+ * @param {string} code - A version-2 game code.
+ * @returns {string|null} Recovered v1 code, or null if malformed.
+ */
+function _decodeV2(code) {
+  if (code.length < 6) return null;
+  const saltStr = code.substring(1, 5);
+  const salt16  = parseInt(saltStr, 16);
+  if (isNaN(salt16)) return null;
+  return '1' + _xorHexStream(code.substring(5), salt16);
+}
+
+/**
+ * Encode the current game into a shareable code string.
  *
  * @param {string}   mapKey      - Map key (may carry 'intro_' prefix).
  * @param {string}   mode        - 'intro' | 'normal'
  * @param {number}   playerCount - 2–5
  * @param {string[]} rules       - Ordered clue keys (one per player; 4 for 2p).
- * @returns {string} Hex game code.
+ * @param {string}   [format]    - 'short' (default, base64url v3), 'obfuscated' (XOR hex v2), 'plain' (hex v1).
+ * @returns {string} Game code.
  * @throws {Error} If a clue key is not in CLUE_LIST.
  */
-function encodeGame(mapKey, mode, playerCount, rules) {
+function encodeGame(mapKey, mode, playerCount, rules, format) {
   const rawKey    = mapKey.replace('intro_', '');
   const modeChar  = mode === 'intro' ? '0' : '1';
   const plyrChar  = playerCount.toString(16);
@@ -108,11 +225,14 @@ function encodeGame(mapKey, mode, playerCount, rules) {
     return ('0' + idx.toString(16)).slice(-2);
   }).join('');
 
-  return '1' + modeChar + plyrChar + rawKey + clueStr;
+  const v1Code = '1' + modeChar + plyrChar + rawKey + clueStr;
+  if (format === 'plain')      return v1Code;
+  if (format === 'obfuscated') return _encodeV2(v1Code);
+  return _encodeV3(v1Code); // default: 'short'
 }
 
 /**
- * Decode a game code string.
+ * Decode a game code string. Handles v1 (plain), v2 (obfuscated) and v3 (short base64url).
  *
  * @param {string} code
  * @returns {{mapKey:string, mode:string, playerCount:number, rules:string[], hint:string}|null}
@@ -120,9 +240,25 @@ function encodeGame(mapKey, mode, playerCount, rules) {
  */
 function decodeGame(code) {
   try {
-    if (!code || code.length < 31) return null;
+    if (!code) return null;
 
     const version = code.charAt(0);
+
+    if (version === '3') {
+      if (code.length < 21) return null;
+      const v1Code = _decodeV3(code);
+      if (!v1Code) return null;
+      return decodeGame(v1Code);
+    }
+
+    if (version === '2') {
+      if (code.length < 35) return null;
+      const v1Code = _decodeV2(code);
+      if (!v1Code) return null;
+      return decodeGame(v1Code);
+    }
+
+    if (code.length < 31) return null;
     if (version !== '1') return null;
 
     const mode = code.charAt(1) === '0' ? 'intro' : 'normal';
